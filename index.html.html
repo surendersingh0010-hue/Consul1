@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConsulAI — Your Personal Consular Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#0e0f13;--ink-mid:#16181f;--ink-light:#1e2130;--ink-border:#252836;
+  --saffron:#e8933a;--saffron-light:#f2b06e;--saffron-glow:rgba(232,147,58,0.12);
+  --ash:#c5c9d8;--ash-muted:#6b7190;--white:#f0f0f4;
+  --green:#3ecf8e;--red:#e05252;--blue:#5b9cf6;
+  --card:rgba(22,24,31,0.9);--border:rgba(255,255,255,0.07);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit',sans-serif;background:var(--ink);color:var(--ash);min-height:100vh;overflow:hidden;}
+.bg-layer{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 10% 0%,rgba(232,147,58,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 90% 100%,rgba(91,156,246,0.05) 0%,transparent 60%);pointer-events:none;}
+.noise{position:fixed;inset:0;z-index:0;opacity:0.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;}
+
+/* ONBOARDING */
+#onboarding{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:var(--ink);transition:opacity 0.5s,transform 0.5s;}
+#onboarding.exit{opacity:0;transform:scale(0.97);pointer-events:none;}
+.onboard-card{width:500px;max-height:92vh;overflow-y:auto;background:var(--ink-mid);border:1px solid var(--ink-border);border-radius:20px;padding:36px 40px;position:relative;box-shadow:0 40px 80px rgba(0,0,0,0.6);}
+.onboard-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--saffron),transparent);}
+.onboard-card::-webkit-scrollbar{width:3px;}.onboard-card::-webkit-scrollbar-thumb{background:var(--border);}
+.ob-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+.ob-logo-mark{width:40px;height:40px;background:linear-gradient(135deg,var(--saffron),var(--saffron-light));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.ob-logo-text{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--white);}
+.ob-logo-text span{color:var(--saffron);}
+.ob-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--white);margin-bottom:6px;}
+.ob-subtitle{font-size:13px;color:var(--ash-muted);line-height:1.6;margin-bottom:24px;}
+.ob-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--saffron);margin-bottom:8px;display:block;}
+.ob-search{width:100%;padding:8px 12px;background:rgba(14,15,19,0.8);border:1px solid var(--ink-border);border-radius:8px;color:var(--ash);font-family:'Outfit',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;margin-bottom:8px;}
+.ob-search:focus{border-color:rgba(232,147,58,0.45);}
+.ob-search::placeholder{color:var(--ash-muted);}
+.flag-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;max-height:150px;overflow-y:auto;}
+.flag-grid::-webkit-scrollbar{width:3px;}.flag-grid::-webkit-scrollbar-thumb{background:var(--border);}
+.flag-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:9px 5px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,0.03);cursor:pointer;transition:all 0.18s;font-size:10px;color:var(--ash-muted);text-align:center;}
+.flag-btn .f{font-size:20px;}
+.flag-btn:hover{border-color:rgba(232,147,58,0.4);background:var(--saffron-glow);color:var(--ash);}
+.flag-btn.selected{border-color:var(--saffron);background:rgba(232,147,58,0.15);color:var(--saffron-light);}
+.ob-divider{height:1px;background:var(--border);margin:20px 0;}
+.ob-field{margin-bottom:16px;}
+.ob-state-select{width:100%;background:rgba(14,15,19,0.8);border:1px solid var(--ink-border);border-radius:8px;padding:10px 12px;color:var(--ash);font-family:'Outfit',sans-serif;font-size:13px;outline:none;cursor:pointer;}
+.ob-state-select:focus{border-color:rgba(232,147,58,0.45);}
+.ob-state-select option,.ob-state-select optgroup{background:#16181f;color:var(--ash);}
+.ob-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--saffron),var(--saffron-light));border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;transition:opacity 0.2s,transform 0.1s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+.ob-btn:hover{opacity:0.9;}.ob-btn:active{transform:scale(0.98);}
+.ob-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* APP */
+#app{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity 0.5s 0.2s;}
+#app.visible{opacity:1;pointer-events:all;}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:rgba(14,15,19,0.95);backdrop-filter:blur(16px);z-index:20;flex-shrink:0;gap:12px;}
+.h-logo{display:flex;align-items:center;gap:10px;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--white);flex-shrink:0;}
+.h-logo-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--saffron),var(--saffron-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.h-logo span{color:var(--saffron);}
+.header-context{display:flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--ash);flex:1;min-width:0;overflow:hidden;}
+.hctx-flag{font-size:16px;line-height:1;flex-shrink:0;}
+.hctx-label{font-weight:600;color:var(--white);font-size:11px;white-space:nowrap;}
+.hctx-sep{font-size:10px;color:var(--ash-muted);flex-shrink:0;}
+.hctx-pill{display:flex;align-items:center;gap:3px;padding:2px 7px;background:rgba(232,147,58,0.12);border:1px solid rgba(232,147,58,0.25);border-radius:10px;font-size:10px;color:var(--saffron-light);font-weight:500;white-space:nowrap;flex-shrink:0;}
+.hctx-edit{cursor:pointer;color:var(--ash-muted);font-size:12px;padding:2px 5px;border-radius:5px;transition:color 0.15s;flex-shrink:0;margin-left:auto;}
+.hctx-edit:hover{color:var(--saffron);}
+.h-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.sos-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(224,82,82,0.12);border:1px solid rgba(224,82,82,0.35);border-radius:8px;color:var(--red);font-size:11px;font-weight:600;cursor:pointer;transition:background 0.2s;white-space:nowrap;}
+.sos-btn:hover{background:rgba(224,82,82,0.22);}
+.sos-pulse{width:6px;height:6px;background:var(--red);border-radius:50%;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(1.4)}}
+.app-body{display:grid;grid-template-columns:300px 1fr;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);background:rgba(14,15,19,0.6);display:flex;flex-direction:column;overflow:hidden;height:100%;}
+
+
+.id-f1,
+
+
+.id-top{font-size:12px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.id-bottom{font-size:10px;color:var(--ash-muted);margin-top:1px;}
+
+.sb-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sb-tab{flex:1;padding:8px 4px;font-size:9px;font-weight:700;text-align:center;cursor:pointer;color:var(--ash-muted);border-bottom:2px solid transparent;transition:all 0.18s;letter-spacing:0.5px;text-transform:uppercase;}
+.sb-tab:hover{color:var(--ash);}
+.sb-tab.active{color:var(--saffron-light);border-bottom-color:var(--saffron);background:rgba(232,147,58,0.06);}
+.sb-panels{flex:1;overflow-y:auto;min-height:80px;}
+.sb-panels::-webkit-scrollbar{width:3px;}.sb-panels::-webkit-scrollbar-thumb{background:var(--border);}
+.sb-panel{display:none;}
+.sb-panel.active{display:block;}
+.svc-group{padding:8px 14px 3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--saffron);opacity:0.75;}
+.svc-list{display:flex;flex-direction:column;gap:2px;padding:0 8px 6px;}
+.svc-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:7px;border:1px solid transparent;cursor:pointer;transition:all 0.16s;font-size:13px;color:var(--ash-muted);line-height:1.3;}
+.svc-item:hover{background:rgba(255,255,255,0.04);color:var(--ash);}
+.svc-item.active{background:rgba(232,147,58,0.1);border-color:rgba(232,147,58,0.25);color:var(--saffron-light);}
+.svc-ico{font-size:13px;width:22px;text-align:center;flex-shrink:0;}
+.sb-footer{flex-shrink:0;border-top:1px solid var(--border);}
+.sb-section{padding:12px 14px;border-bottom:1px solid var(--border);overflow:visible;}
+.sb-section-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--saffron);margin-bottom:8px;opacity:0.75;}
+.ctx-row{display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;align-items:flex-start;}
+.ctx-row:last-child{margin-bottom:0;}
+.ctx-k{color:var(--ash-muted);}
+.ctx-v{color:var(--white);font-weight:500;text-align:right;max-width:58%;font-size:10px;}
+.ql-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(14,15,19,0.5);border:1px solid var(--border);border-radius:7px;text-decoration:none;transition:all 0.18s;margin-bottom:4px;cursor:pointer;pointer-events:auto;}
+.ql-btn:hover{border-color:rgba(232,147,58,0.4);background:rgba(232,147,58,0.06);}
+.ql-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0;}
+.ql-text{flex:1;min-width:0;}
+.ql-label{font-size:11px;font-weight:600;color:var(--white);}
+.ql-note{font-size:9px;color:var(--ash-muted);margin-top:1px;}
+.ql-arrow{font-size:10px;color:var(--saffron);opacity:0.7;flex-shrink:0;}
+.tracker-item{padding:8px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;background:rgba(14,15,19,0.5);cursor:pointer;transition:border-color 0.18s;}
+.tracker-item:hover{border-color:rgba(232,147,58,0.4);}
+.tracker-ref{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--saffron);font-weight:600;margin-bottom:2px;}
+.tracker-meta{font-size:10px;color:var(--ash-muted);}
+.tracker-status{display:inline-flex;align-items:center;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:600;margin-top:4px;}
+.tracker-status.submitted{background:rgba(91,156,246,.12);color:#8ab8ff;border:1px solid rgba(91,156,246,.25);}
+.tracker-status.processing{background:rgba(232,147,58,.12);color:var(--saffron-light);border:1px solid rgba(232,147,58,.25);}
+.tracker-status.ready{background:rgba(62,207,142,.12);color:var(--green);border:1px solid rgba(62,207,142,.25);}
+.tracker-status.collected{background:rgba(255,255,255,.06);color:var(--ash-muted);border:1px solid var(--border);}
+
+/* CHAT */
+.chat-area{display:flex;flex-direction:column;overflow:hidden;}
+.chat-msgs{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth;}
+.chat-msgs::-webkit-scrollbar{width:3px;}.chat-msgs::-webkit-scrollbar-thumb{background:var(--border);}
+.msg{display:flex;gap:10px;animation:fadeUp 0.3s ease;max-width:820px;}
+.msg.user{flex-direction:row-reverse;align-self:flex-end;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.av.agent{background:linear-gradient(135deg,#1e2130,var(--saffron));border:1px solid rgba(232,147,58,0.3);}
+.av.user{background:rgba(255,255,255,0.08);border:1px solid var(--border);font-size:11px;}
+.bub{padding:11px 14px;border-radius:10px;font-size:13px;line-height:1.65;max-width:600px;}
+.bub.agent{background:var(--card);border:1px solid var(--border);border-radius:3px 10px 10px 10px;}
+.bub.user{background:rgba(232,147,58,0.13);border:1px solid rgba(232,147,58,0.25);border-radius:10px 3px 10px 10px;color:var(--white);}
+.bub strong{color:var(--saffron-light);}
+.bub a{color:var(--blue);text-decoration:none;}.bub a:hover{text-decoration:underline;}
+.bub.agent .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0;}
+.bub.agent .steps{display:flex;flex-direction:column;gap:7px;margin:8px 0;}
+.bub.agent .step{display:flex;gap:10px;align-items:flex-start;}
+.bub.agent .alert{display:block;padding:9px 12px;border-radius:8px;margin:7px 0;line-height:1.65;}
+.bub.agent strong{color:var(--saffron-light);}
+.qr-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.qr{padding:5px 11px;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,0.03);font-size:11px;cursor:pointer;color:var(--ash-muted);transition:all 0.18s;}
+.qr:hover{border-color:rgba(232,147,58,0.4);color:var(--saffron-light);background:var(--saffron-glow);}
+.sugg-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.sugg-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--ash-muted);width:100%;margin-bottom:2px;}
+.sugg-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;border:1px solid rgba(232,147,58,0.3);background:rgba(232,147,58,0.06);font-size:11px;font-weight:500;cursor:pointer;color:var(--saffron-light);transition:all 0.18s;font-family:'Outfit',sans-serif;}
+.sugg-btn::before{content:'↗';font-size:10px;opacity:0.7;}
+.sugg-btn:hover{border-color:var(--saffron);background:rgba(232,147,58,0.14);color:var(--white);}
+.typing-bub{display:flex;gap:4px;align-items:center;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:3px 10px 10px 10px;}
+.typing-bub span{width:5px;height:5px;background:var(--saffron);border-radius:50%;animation:tdot 1.2s infinite;opacity:0.5;}
+.typing-bub span:nth-child(2){animation-delay:0.2s;}.typing-bub span:nth-child(3){animation-delay:0.4s;}
+@keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px);opacity:1}}
+.followup-bank{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;background:rgba(14,15,19,0.4);border:1px solid var(--border);border-radius:9px;margin:0 24px 12px;flex-shrink:0;}
+.followup-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--ash-muted);width:100%;margin-bottom:3px;}
+.followup-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,0.03);font-size:11px;font-weight:500;cursor:pointer;color:var(--ash);transition:all 0.18s;font-family:'Outfit',sans-serif;}
+.followup-btn:hover{border-color:rgba(232,147,58,0.4);background:rgba(232,147,58,0.08);color:var(--saffron-light);}
+.f-icon{font-size:12px;}
+.chat-input-area{padding:14px 20px;border-top:1px solid var(--border);background:rgba(14,15,19,0.9);backdrop-filter:blur(12px);flex-shrink:0;}
+.input-wrap{display:flex;gap:8px;align-items:flex-end;}
+.chat-in{flex:1;background:rgba(22,24,31,0.8);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;resize:none;outline:none;transition:border-color 0.2s;min-height:42px;max-height:120px;}
+.chat-in:focus{border-color:rgba(232,147,58,0.35);}
+.chat-in::placeholder{color:var(--ash-muted);}
+.send{width:42px;height:42px;background:linear-gradient(135deg,var(--saffron),var(--saffron-light));border:none;border-radius:10px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:opacity 0.2s,transform 0.1s;flex-shrink:0;color:var(--ink);}
+.send:hover{opacity:0.88;}.send:active{transform:scale(0.95);}
+
+/* COMPONENTS */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px;}
+.info-cell{background:rgba(14,15,19,0.6);border:1px solid var(--border);border-radius:7px;padding:9px 11px;}
+.ic-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--saffron);margin-bottom:2px;}
+.ic-val{font-size:11px;font-weight:500;color:var(--white);}
+.alert{display:flex;gap:8px;padding:9px 12px;border-radius:7px;margin-top:8px;font-size:12px;line-height:1.5;}
+.alert.warn{background:rgba(232,147,58,0.09);border:1px solid rgba(232,147,58,0.25);color:var(--saffron-light);}
+.alert.info{background:rgba(91,156,246,0.09);border:1px solid rgba(91,156,246,0.25);color:#8ab8ff;}
+.alert.ok{background:rgba(62,207,142,0.09);border:1px solid rgba(62,207,142,0.25);color:var(--green);}
+.alert.emer{background:rgba(224,82,82,0.09);border:1px solid rgba(224,82,82,0.3);color:var(--red);}
+.steps{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.step{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;background:rgba(14,15,19,0.5);border:1px solid var(--border);border-left:2px solid var(--saffron);border-radius:0 7px 7px 0;}
+.step-num{min-width:20px;height:20px;background:linear-gradient(135deg,var(--saffron),var(--saffron-light));color:var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.step-body{font-size:12px;line-height:1.6;}
+.ck-list{list-style:none;display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.ck-list li{display:flex;align-items:flex-start;gap:7px;font-size:12px;line-height:1.5;}
+.ck-list li::before{content:'✓';color:var(--green);font-weight:700;font-size:10px;margin-top:2px;flex-shrink:0;}
+.ck-list li.warn::before{content:'⚠';color:var(--saffron);}
+.section-label{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--saffron);margin:12px 0 5px;}
+.appt-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:linear-gradient(135deg,var(--saffron),var(--saffron-light));color:var(--ink);border:none;border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;transition:opacity 0.2s;margin-bottom:10px;pointer-events:auto;}
+.appt-btn:hover{opacity:0.88;}
+.hours-block{margin-top:6px;}
+.hours-day-row{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;background:rgba(14,15,19,0.5);border:1px solid var(--border);border-radius:7px 7px 0 0;border-bottom:none;}
+.hours-day-label{font-size:11px;font-weight:600;color:var(--ash-muted);}
+.hours-day-time{font-size:12px;font-weight:700;color:var(--white);font-family:'JetBrains Mono',monospace;}
+.hours-slots{border:1px solid var(--border);border-radius:0 0 7px 7px;overflow:hidden;margin-bottom:5px;}
+.hours-slot{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;border-bottom:1px solid rgba(255,255,255,.04);font-size:10px;}
+.hours-slot:last-child{border-bottom:none;}
+.hours-slot-label{color:var(--ash-muted);}
+.hours-slot-time{font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--saffron-light);}
+.hours-weekend{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;background:rgba(224,82,82,.06);border:1px solid rgba(224,82,82,.15);border-radius:7px;font-size:10px;}
+.hours-weekend-label{color:var(--ash-muted);}
+.hours-weekend-val{color:var(--red);font-weight:600;}
+.holiday-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.holiday-pill{padding:2px 8px;border-radius:10px;background:rgba(232,147,58,.08);border:1px solid rgba(232,147,58,.2);font-size:10px;color:var(--ash-muted);}
+.holiday-pill strong{color:var(--saffron-light);font-weight:600;}
+
+/* RESPONSE FORMATTING */
+.resp-p{margin:0 0 7px;font-size:13px;line-height:1.65;color:var(--ash);}
+.resp-p:last-child{margin-bottom:0;}
+.resp-h1{font-size:14px;font-weight:700;color:var(--saffron-light);margin:10px 0 5px;}
+.resp-h2{font-size:13px;font-weight:700;color:var(--white);margin:9px 0 4px;}
+.resp-h3{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--saffron);margin:9px 0 4px;}
+.resp-hr{border:none;border-top:1px solid var(--border);margin:8px 0;}
+.resp-list{list-style:none;display:flex;flex-direction:column;gap:4px;margin:5px 0 8px;padding:0;}
+.resp-list li{display:flex;align-items:flex-start;gap:7px;font-size:12px;line-height:1.5;color:var(--ash);}
+.resp-list li::before{content:'✓';color:var(--green);font-weight:700;font-size:10px;margin-top:2px;flex-shrink:0;}
+.resp-code{background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;}
+
+/* FORMS */
+.form-card{background:rgba(22,24,31,0.7);border:1px solid var(--border);border-radius:11px;padding:16px;margin-top:8px;}
+.fc-title{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;color:var(--saffron-light);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.fg{display:flex;flex-direction:column;gap:3px;}.fg.full{grid-column:1/-1;}
+.fl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--ash-muted);}
+.fi,.fs{background:rgba(14,15,19,0.8);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:7px 10px;color:var(--ash);font-family:'Outfit',sans-serif;font-size:12px;outline:none;transition:border-color 0.2s;width:100%;}
+.fi:focus,.fs:focus{border-color:rgba(232,147,58,0.45);}
+.fs option{background:var(--ink-mid);}
+.fa{display:flex;gap:7px;margin-top:12px;}
+.btn-p{background:linear-gradient(135deg,var(--saffron),var(--saffron-light));color:var(--ink);border:none;padding:8px 16px;border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:opacity 0.2s;}
+.btn-p:hover{opacity:0.88;}
+.btn-s{background:transparent;color:var(--ash-muted);border:1px solid var(--border);padding:8px 14px;border-radius:7px;font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;transition:all 0.18s;}
+.btn-s:hover{border-color:rgba(255,255,255,0.2);color:var(--ash);}
+
+/* MODALS */
+.modal-ov{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.2s;}
+.modal-ov.hidden{display:none;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--ink-mid);border:1px solid rgba(224,82,82,0.3);border-radius:16px;padding:24px;max-width:460px;width:90%;animation:slideUp 0.3s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.modal-h{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.modal-ico{width:40px;height:40px;background:rgba(224,82,82,0.15);border-radius:50%;border:2px solid rgba(224,82,82,0.35);display:flex;align-items:center;justify-content:center;font-size:17px;}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--red);}
+.modal-sub{font-size:10px;color:var(--ash-muted);margin-top:2px;}
+.modal-close{width:100%;padding:9px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--ash-muted);font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;}
+.modal-close:hover{border-color:rgba(255,255,255,0.2);color:var(--ash);}
+.ec-list{display:flex;flex-direction:column;gap:7px;margin-bottom:16px;}
+.ec{display:flex;align-items:center;gap:9px;padding:10px 12px;background:rgba(14,15,19,0.6);border:1px solid var(--border);border-radius:8px;}
+.ec-flag{font-size:19px;}
+.ec-info{flex:1;}
+.ec-country{font-size:11px;font-weight:600;color:var(--white);}
+.ec-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--saffron);margin-top:1px;}
+.ec-btn{background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.35);color:var(--red);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;}
+.ec-btn:hover{background:rgba(224,82,82,0.28);}
+
+/* EMERGENCY MODAL INTERNALS */
+.emer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:4px;}
+.emer-cat{padding:9px 7px;background:rgba(14,15,19,0.7);border:1px solid var(--border);border-radius:9px;cursor:pointer;transition:all 0.18s;text-align:center;}
+.emer-cat:hover{border-color:rgba(224,82,82,0.45);background:rgba(224,82,82,0.08);}
+.emer-cat.active{border-color:var(--red);background:rgba(224,82,82,0.12);}
+.emer-cat-ico{font-size:19px;margin-bottom:4px;}
+.emer-cat-label{font-size:10px;font-weight:600;color:var(--white);margin-bottom:2px;line-height:1.3;}
+.emer-cat-sub{font-size:9px;color:var(--ash-muted);line-height:1.3;}
+.emer-steps{display:flex;flex-direction:column;gap:7px;margin:10px 0;}
+.emer-step{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;background:rgba(14,15,19,0.6);border:1px solid var(--border);border-left:2px solid var(--red);border-radius:0 7px 7px 0;}
+.emer-step-num{min-width:19px;height:19px;background:rgba(224,82,82,0.2);border:1px solid rgba(224,82,82,0.4);color:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;}
+.emer-step-body{font-size:11px;line-height:1.6;color:var(--ash);}
+.emer-step-body strong{color:var(--white);}
+.emer-hotline{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;background:rgba(14,15,19,0.5);border:1px solid var(--border);border-radius:7px;margin-bottom:5px;}
+.emer-hotline-name{font-size:11px;font-weight:600;color:var(--white);}
+.emer-hotline-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--saffron);}
+.emer-call-btn{background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.35);color:var(--red);padding:4px 9px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;}
+.emer-call-btn:hover{background:rgba(224,82,82,0.28);}
+
+/* SOS MODAL */
+.sos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.sos-sc{padding:11px 8px;background:rgba(14,15,19,0.7);border:1px solid var(--border);border-radius:9px;cursor:pointer;transition:all 0.18s;text-align:center;}
+.sos-sc:hover{border-color:rgba(224,82,82,0.5);background:rgba(224,82,82,0.08);}
+.sos-sc.active{border-color:var(--red);background:rgba(224,82,82,0.12);}
+.sos-sc-ico{font-size:22px;margin-bottom:4px;}
+.sos-sc-label{font-size:11px;font-weight:600;color:var(--white);margin-bottom:2px;}
+.sos-sc-sub{font-size:9px;color:var(--ash-muted);}
+.sos-step{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;background:rgba(14,15,19,0.6);border:1px solid var(--border);border-left:2px solid var(--red);border-radius:0 7px 7px 0;margin-bottom:6px;}
+.sos-step-n{min-width:19px;height:19px;background:rgba(224,82,82,0.2);border:1px solid rgba(224,82,82,0.4);color:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;}
+.sos-step-b{font-size:11px;line-height:1.6;color:var(--ash);}
+.sos-step-b strong{color:var(--white);}
+.sos-contact{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;background:rgba(14,15,19,0.5);border:1px solid var(--border);border-radius:7px;margin-bottom:5px;}
+.sos-contact-name{font-size:11px;font-weight:600;color:var(--white);}
+.sos-contact-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--saffron);}
+.sos-call{background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.35);color:var(--red);padding:4px 9px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;}
+.sos-call:hover{background:rgba(224,82,82,0.28);}
+
+/* TRACKER MODAL */
+.timeline{display:flex;flex-direction:column;}
+.tl-step{display:flex;gap:11px;position:relative;}
+.tl-step:not(:last-child)::after{content:'';position:absolute;left:9px;top:26px;width:2px;height:calc(100% - 2px);background:var(--border);}
+.tl-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;margin-top:2px;border:2px solid var(--border);background:var(--ink-mid);position:relative;z-index:1;}
+.tl-dot.done{background:var(--green);border-color:var(--green);color:var(--ink);}
+.tl-dot.active{background:var(--saffron);border-color:var(--saffron);color:var(--ink);animation:pulse 1.5s infinite;}
+.tl-dot.pending{background:var(--ink-mid);border-color:var(--border);color:var(--ash-muted);}
+.tl-body{padding-bottom:14px;}
+.tl-title{font-size:12px;font-weight:600;color:var(--white);}
+.tl-title.pending{color:var(--ash-muted);}
+.tl-desc{font-size:10px;color:var(--ash-muted);margin-top:2px;line-height:1.5;}
+.tl-date{font-size:9px;color:var(--saffron);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+
+/* PROFILE MODAL */
+.profile-hero{display:flex;align-items:center;gap:14px;padding:14px;background:rgba(232,147,58,0.07);border:1px solid rgba(232,147,58,0.2);border-radius:11px;margin-bottom:14px;}
+@keyframes sos-glow{0%,100%{box-shadow:0 0 0 0 rgba(224,82,82,0)}50%{box-shadow:0 0 10px 3px rgba(224,82,82,0.4)}}
+
+
+.id-edit-btn:hover{color:var(--saffron);background:rgba(232,147,58,0.1);}
+
+
+/* ── FONT SIZE INCREASES ── */
+body { font-size: 15px; }
+.bub { font-size: 14px; line-height: 1.7; }
+.svc-item { font-size: 13px; }
+.ic-val { font-size: 12px; }
+.ic-label { font-size: 10px; }
+.step-body { font-size: 13px; line-height: 1.65; }
+.ck-list li { font-size: 13px; }
+.alert { font-size: 13px; }
+.ql-label { font-size: 12px; }
+.ql-note { font-size: 11px; }
+.ctx-row { font-size: 11px; }
+.chat-in { font-size: 14px; }
+.ob-subtitle { font-size: 14px; }
+.section-label { font-size: 10px; }
+.followup-btn { font-size: 12px; }
+.qr { font-size: 12px; }
+.sugg-btn { font-size: 12px; }
+.modal-sub { font-size: 12px; }
+.appt-btn { font-size: 13px; }
+
+/* ── SIDEBAR TOOL STRIP ── */
+.sb-tools-strip{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:5px;}
+.sb-tool-btn{background:rgba(232,147,58,0.08);border:1px solid rgba(232,147,58,0.2);border-radius:7px;padding:7px 10px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;color:var(--saffron-light);cursor:pointer;text-align:left;transition:all 0.16s;width:100%;}
+.sb-tool-btn:hover{background:rgba(232,147,58,0.15);border-color:rgba(232,147,58,0.4);}
+
+
+/* ── ID CARD ── */
+.id-card{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.id-card-top{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.id-flags{display:flex;align-items:center;gap:0;}
+.id-f1,.id-f2{font-size:22px;line-height:1;}
+.id-arr{font-size:12px;color:var(--ash-muted);margin:0 4px;}
+.id-consulate{font-size:10px;color:var(--saffron);margin-top:5px;opacity:0.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.id-edit-btn{background:rgba(232,147,58,0.1);border:1px solid rgba(232,147,58,0.25);color:var(--saffron-light);font-size:11px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;padding:4px 9px;border-radius:6px;transition:all 0.15s;white-space:nowrap;flex-shrink:0;}
+.id-edit-btn:hover{background:rgba(232,147,58,0.2);}
+
+
+
+
+
+/* ── Footer layout: Key Info fixed, Quick Links scrollable ── */
+#keyInfoSection{flex-shrink:0;}
+#trackerSection{flex-shrink:0;}
+
+
+/* ── LINKS TAB ── */
+#tab-links{padding:4px 0;}
+#quickLinksBox .ql-btn{margin:0 8px 6px;display:flex;align-items:center;gap:8px;padding:9px 10px;background:rgba(14,15,19,0.5);border:1px solid var(--border);border-radius:8px;text-decoration:none;transition:all 0.18s;cursor:pointer;pointer-events:auto;}
+#quickLinksBox .ql-btn:hover{background:rgba(232,147,58,0.08);border-color:rgba(232,147,58,0.3);}
+#quickLinksBox .ql-icon{font-size:16px;flex-shrink:0;}
+#quickLinksBox .ql-label{font-size:12px;font-weight:600;color:var(--white);}
+#quickLinksBox .ql-note{font-size:10px;color:var(--ash-muted);margin-top:1px;}
+#quickLinksBox .ql-arrow{margin-left:auto;font-size:11px;color:var(--saffron);flex-shrink:0;}
+#quickLinksBox .ql-text{flex:1;min-width:0;}
+
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="noise"></div>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="onboard-card">
+    <div class="ob-logo"><div class="ob-logo-mark">🌐</div><div class="ob-logo-text">Consul<span>AI</span></div></div>
+    <div class="ob-title">Your personal consular guide</div>
+    <div class="ob-subtitle">Select your nationality and where you live — all advice, procedures and emergency contacts will be tailored to your exact situation.</div>
+    <div class="ob-field">
+      <label class="ob-label">I am a citizen of</label>
+      <input type="text" class="ob-search" placeholder="Search nationality…" oninput="filterNat(this.value)">
+      <div class="flag-grid" id="nationalityGrid">
+        <div class="flag-btn selected" data-code="IN" onclick="selectNat(this)"><span class="f">🇮🇳</span>India</div>
+        <div class="flag-btn" data-code="PK" onclick="selectNat(this)"><span class="f">🇵🇰</span>Pakistan</div>
+        <div class="flag-btn" data-code="BD" onclick="selectNat(this)"><span class="f">🇧🇩</span>Bangladesh</div>
+        <div class="flag-btn" data-code="LK" onclick="selectNat(this)"><span class="f">🇱🇰</span>Sri Lanka</div>
+        <div class="flag-btn" data-code="NP" onclick="selectNat(this)"><span class="f">🇳🇵</span>Nepal</div>
+        <div class="flag-btn" data-code="PH" onclick="selectNat(this)"><span class="f">🇵🇭</span>Philippines</div>
+        <div class="flag-btn" data-code="NG" onclick="selectNat(this)"><span class="f">🇳🇬</span>Nigeria</div>
+        <div class="flag-btn" data-code="GH" onclick="selectNat(this)"><span class="f">🇬🇭</span>Ghana</div>
+        <div class="flag-btn" data-code="KE" onclick="selectNat(this)"><span class="f">🇰🇪</span>Kenya</div>
+        <div class="flag-btn" data-code="EG" onclick="selectNat(this)"><span class="f">🇪🇬</span>Egypt</div>
+      </div>
+    </div>
+    <div class="ob-divider"></div>
+    <div class="ob-field">
+      <label class="ob-label">Currently living in</label>
+      <input type="text" class="ob-search" placeholder="Search country…" oninput="filterRes(this.value)">
+      <div class="flag-grid" id="residenceGrid">
+        <div class="flag-btn selected" data-code="DE" onclick="selectRes(this)"><span class="f">🇩🇪</span>Germany</div>
+        <div class="flag-btn" data-code="US" onclick="selectRes(this)"><span class="f">🇺🇸</span>USA</div>
+        <div class="flag-btn" data-code="GB" onclick="selectRes(this)"><span class="f">🇬🇧</span>UK</div>
+        <div class="flag-btn" data-code="AE" onclick="selectRes(this)"><span class="f">🇦🇪</span>UAE</div>
+        <div class="flag-btn" data-code="CA" onclick="selectRes(this)"><span class="f">🇨🇦</span>Canada</div>
+        <div class="flag-btn" data-code="AU" onclick="selectRes(this)"><span class="f">🇦🇺</span>Australia</div>
+        <div class="flag-btn" data-code="SG" onclick="selectRes(this)"><span class="f">🇸🇬</span>Singapore</div>
+        <div class="flag-btn" data-code="FR" onclick="selectRes(this)"><span class="f">🇫🇷</span>France</div>
+        <div class="flag-btn" data-code="NL" onclick="selectRes(this)"><span class="f">🇳🇱</span>Netherlands</div>
+        <div class="flag-btn" data-code="SA" onclick="selectRes(this)"><span class="f">🇸🇦</span>Saudi Arabia</div>
+        <div class="flag-btn" data-code="QA" onclick="selectRes(this)"><span class="f">🇶🇦</span>Qatar</div>
+        <div class="flag-btn" data-code="MY" onclick="selectRes(this)"><span class="f">🇲🇾</span>Malaysia</div>
+        <div class="flag-btn" data-code="KW" onclick="selectRes(this)"><span class="f">🇰🇼</span>Kuwait</div>
+        <div class="flag-btn" data-code="BH" onclick="selectRes(this)"><span class="f">🇧🇭</span>Bahrain</div>
+        <div class="flag-btn" data-code="OM" onclick="selectRes(this)"><span class="f">🇴🇲</span>Oman</div>
+        <div class="flag-btn" data-code="IT" onclick="selectRes(this)"><span class="f">🇮🇹</span>Italy</div>
+        <div class="flag-btn" data-code="SE" onclick="selectRes(this)"><span class="f">🇸🇪</span>Sweden</div>
+        <div class="flag-btn" data-code="NO" onclick="selectRes(this)"><span class="f">🇳🇴</span>Norway</div>
+      </div>
+    </div>
+    <div class="ob-field" id="stateSection" style="display:none">
+      <label class="ob-label" id="stateLabel">Select your state in Germany</label>
+      <select id="stateSelectEl" class="ob-state-select" onchange="onStateChange(this.value)"><option value="">-- Select your state --</option></select>
+      <div id="consulatePreview" style="display:none;margin-top:9px;padding:9px 11px;background:rgba(232,147,58,0.08);border:1px solid rgba(232,147,58,0.25);border-radius:8px;font-size:11px">
+        <div style="color:var(--saffron);font-weight:600;margin-bottom:1px" id="cpName"></div>
+        <div style="color:var(--ash-muted)" id="cpAddr"></div>
+      </div>
+    </div>
+    <button class="ob-btn" id="startBtn" onclick="startApp()">🚀 Start My Consular Journey</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="h-logo"><div class="h-logo-mark">🌐</div>Consul<span>AI</span></div>
+    <div class="header-context" id="headerCtx"></div>
+    <div class="h-right">
+      <button class="sos-btn" onclick="openEmer()"><div class="sos-pulse"></div>Emergency</button>
+      <button class="sos-btn" onclick="openSOS()" style="background:rgba(224,82,82,0.25);border-color:rgba(224,82,82,0.7);font-weight:700;animation:sos-glow 2s infinite">⚠ SOS</button>
+    </div>
+  </header>
+  <div class="app-body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="id-card">
+        <div class="id-card-top">
+          <div class="id-flags">
+            <span class="id-f1" id="sbF1">🌐</span>
+            <span class="id-arr">→</span>
+            <span class="id-f2" id="sbF2">🌐</span>
+          </div>
+          <button class="id-edit-btn" onclick="goBack()" title="Change Profile">✎ Change</button>
+        </div>
+        <div class="id-consulate" id="sbCon"></div>
+      </div>
+      <div class="sb-tools-strip">
+        <button class="sb-tool-btn" onclick="svc(this,'Processing Time Estimator','⏱️')">⏱️ Processing Time Estimator</button>
+        <button class="sb-tool-btn" onclick="svc(this,'Document Checklist Builder','📋')">📋 Document Checklist Builder</button>
+      </div>
+      <div class="sb-tabs">
+        <div class="sb-tab active" onclick="switchTab('consular')">Consular</div>
+        <div class="sb-tab" onclick="switchTab('certs')">Certificates</div>
+        <div class="sb-tab" onclick="switchTab('community')">Community</div>
+        <div class="sb-tab" onclick="switchTab('links')">Links</div>
+      </div>
+      <div class="sb-panels">
+        <div class="sb-panel active" id="tab-consular">
+          <div class="svc-group">Travel &amp; Entry</div>
+          <div class="svc-list">
+            <div class="svc-item active" onclick="svc(this,'Visa Services','🛂')"><div class="svc-ico">🛂</div>Visa Services</div>
+            <div class="svc-item" onclick="svc(this,'Travel Advisories','🗺️')"><div class="svc-ico">🗺️</div>Travel Advisories</div>
+          </div>
+          <div class="svc-group">Passport</div>
+          <div class="svc-list">
+            <div class="svc-item" onclick="svc(this,'Passport Renewal','📘')"><div class="svc-ico">📘</div>Renewal</div>
+            <div class="svc-item" onclick="svc(this,'Lost or Damaged Passport','🚫')"><div class="svc-ico">🚫</div>Lost / Damaged</div>
+            <div class="svc-item" onclick="svc(this,'Passport Details Change','✏️')"><div class="svc-ico">✏️</div>Details Change</div>
+            <div class="svc-item" onclick="svc(this,'Newborn Passport','👶')"><div class="svc-ico">👶</div>Newborn Passport</div>
+            <div class="svc-item" onclick="svc(this,'Emergency Certificate','🚨')"><div class="svc-ico">🚨</div>Emergency Certificate</div>
+            <div class="svc-item" onclick="svc(this,'Asylum / Duldung Passport','🔐')"><div class="svc-ico">🔐</div>Asylum / Duldung</div>
+          </div>
+          <div class="svc-group">OCI &amp; Citizenship</div>
+          <div class="svc-list">
+            <div class="svc-item" onclick="svc(this,'OCI Fresh Application','🏷️')"><div class="svc-ico">🏷️</div>OCI Fresh</div>
+            <div class="svc-item" onclick="svc(this,'OCI Spouse Application','💍')"><div class="svc-ico">💍</div>OCI Spouse</div>
+            <div class="svc-item" onclick="svc(this,'OCI Renewal or Loss','🔄')"><div class="svc-ico">🔄</div>OCI Renewal / Loss</div>
+            <div class="svc-item" onclick="svc(this,'PIO to OCI Conversion','📋')"><div class="svc-ico">📋</div>PIO to OCI</div>
+            <div class="svc-item" onclick="svc(this,'Citizenship and Naturalization','🏛️')"><div class="svc-ico">🏛️</div>Naturalization</div>
+            <div class="svc-item" onclick="svc(this,'Surrender Certificate','📄')"><div class="svc-ico">📄</div>Surrender Certificate</div>
+          </div>
+        </div>
+        <div class="sb-panel" id="tab-certs">
+          <div class="svc-group">Attestation</div>
+          <div class="svc-list">
+            <div class="svc-item" onclick="svc(this,'Attestation Services','📎')"><div class="svc-ico">📎</div>Attestation Services</div>
+            <div class="svc-item" onclick="svc(this,'Police Clearance Certificate','👮')"><div class="svc-ico">👮</div>Police Clearance (PCC)</div>
+          </div>
+          <div class="svc-group">Certificates</div>
+          <div class="svc-list">
+            <div class="svc-item" onclick="svc(this,'Birth Certificate','👶')"><div class="svc-ico">👶</div>Birth Certificate</div>
+            <div class="svc-item" onclick="svc(this,'Name Change Certificate','✏️')"><div class="svc-ico">✏️</div>Name Change</div>
+            <div class="svc-item" onclick="svc(this,'NOC for Newborn Naming','📄')"><div class="svc-ico">📄</div>NOC Newborn Naming</div>
+            <div class="svc-item" onclick="svc(this,'Non-Nationality Certificate','🌐')"><div class="svc-ico">🌐</div>Non-Nationality Cert</div>
+            <div class="svc-item" onclick="svc(this,'NRI Certificate','🌍')"><div class="svc-ico">🌍</div>NRI Certificate</div>
+            <div class="svc-item" onclick="svc(this,'Death Certificate and Repatriation','🕊️')"><div class="svc-ico">🕊️</div>Death &amp; Repatriation</div>
+          </div>
+          <div class="svc-group">Other</div>
+          <div class="svc-list">
+            <div class="svc-item" onclick="svc(this,'International Driving Permit','🚗')"><div class="svc-ico">🚗</div>Driving Permit (IDP)</div>
+            <div class="svc-item" onclick="svc(this,'eCARe Portal','🕊️')"><div class="svc-ico">🕊️</div>eCARe Portal</div>
+            <div class="svc-item" onclick="svc(this,'Postal Applications','📬')"><div class="svc-ico">📬</div>Postal Applications</div>
+          </div>
+        </div>
+        <div class="sb-panel" id="tab-community">
+          <div class="svc-group">Registration</div>
+          <div class="svc-list">
+            <div class="svc-item" onclick="svc(this,'NRI Registration','📋')"><div class="svc-ico">📋</div>Register as NRI</div>
+            <div class="svc-item" onclick="svc(this,'Indian Student Registration','🎓')"><div class="svc-ico">🎓</div>Student Registration</div>
+            <div class="svc-item" onclick="svc(this,'Overseas Voter Registration','🗳️')"><div class="svc-ico">🗳️</div>Overseas Voter</div>
+          </div>
+          <div class="svc-group">Welfare &amp; Support</div>
+          <div class="svc-list">
+            <div class="svc-item" onclick="svc(this,'MADAD Portal','🤝')"><div class="svc-ico">🤝</div>MADAD Portal</div>
+            <div class="svc-item" onclick="svc(this,'Community Welfare Fund','💚')"><div class="svc-ico">💚</div>Welfare Fund</div>
+            <div class="svc-item" onclick="svc(this,'Weekly Open House','📅')"><div class="svc-ico">📅</div>Weekly Open House</div>
+          </div>
+          <div class="svc-group">Advisories</div>
+          <div class="svc-list">
+            <div class="svc-item" onclick="svc(this,'Fraud Advisory','🚨')"><div class="svc-ico">🚨</div>Fraud Advisory</div>
+          </div>
+        </div>
+        <div class="sb-panel" id="tab-links"><div id="quickLinksBox" style="padding:8px 6px;"></div></div>
+        </div>
+      <div class="sb-footer">
+        <div class="sb-section" id="keyInfoSection">
+          <div class="sb-section-label">Key Info</div>
+          <div id="keyInfoBox"></div>
+        </div>
+        <div class="sb-section" id="trackerSection" style="display:none">
+          <div class="sb-section-label" style="display:flex;align-items:center;justify-content:space-between">
+            My Applications
+            <span id="trackerBadge" style="background:var(--saffron);color:var(--ink);border-radius:9px;padding:1px 6px;font-size:9px;font-weight:700"></span>
+          </div>
+          <div id="trackerPanel"><div style="font-size:11px;color:var(--ash-muted);text-align:center;padding:12px 0">No applications yet</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- CHAT -->
+    <div class="chat-area">
+      <div class="chat-msgs" id="chatMsgs"></div>
+      <div class="followup-bank" id="followupBank" style="display:none">
+        <div class="followup-label">Suggested questions</div>
+      </div>
+      <div class="chat-input-area">
+        <div class="input-wrap">
+          <textarea class="chat-in" id="chatIn" placeholder="Ask anything about your consular services…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send" onclick="sendMsg()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EMERGENCY MODAL -->
+<div class="modal-ov hidden" id="emerModal">
+  <div class="modal" style="max-width:500px;max-height:88vh;overflow-y:auto;">
+    <div class="modal-h">
+      <div class="modal-ico">🆘</div>
+      <div><div class="modal-title">Emergency Assistance</div><div class="modal-sub" id="emerSub">Select your situation</div></div>
+    </div>
+    <div id="emerTriage">
+      <div class="emer-grid">
+        <div class="emer-cat" onclick="showEmerDetail('death')"><div class="emer-cat-ico">🕯️</div><div class="emer-cat-label">Death Abroad</div><div class="emer-cat-sub">Repatriation guidance</div></div>
+        <div class="emer-cat" onclick="showEmerDetail('accident')"><div class="emer-cat-ico">🚑</div><div class="emer-cat-label">Accident / Injury</div><div class="emer-cat-sub">Medical emergency</div></div>
+        <div class="emer-cat" onclick="showEmerDetail('mental')"><div class="emer-cat-ico">🧠</div><div class="emer-cat-label">Mental Health</div><div class="emer-cat-sub">Crisis support</div></div>
+        <div class="emer-cat" onclick="showEmerDetail('financial')"><div class="emer-cat-ico">💸</div><div class="emer-cat-label">Financial Distress</div><div class="emer-cat-sub">Stranded abroad</div></div>
+        <div class="emer-cat" onclick="showEmerDetail('passport')"><div class="emer-cat-ico">📄</div><div class="emer-cat-label">Lost Passport</div><div class="emer-cat-sub">Replacement steps</div></div>
+        <div class="emer-cat" onclick="showEmerDetail('arrested')"><div class="emer-cat-ico">⚖️</div><div class="emer-cat-label">Arrested</div><div class="emer-cat-sub">Legal aid rights</div></div>
+        <div class="emer-cat" onclick="showEmerDetail('hostage')"><div class="emer-cat-ico">🔒</div><div class="emer-cat-label">Hostage</div><div class="emer-cat-sub">Kidnapping situation</div></div>
+        <div class="emer-cat" onclick="showEmerDetail('missing')"><div class="emer-cat-ico">🔍</div><div class="emer-cat-label">Missing Person</div><div class="emer-cat-sub">National unaccounted for</div></div>
+        <div class="emer-cat" onclick="showEmerDetail('medical')"><div class="emer-cat-ico">🏥</div><div class="emer-cat-label">Critical Medical</div><div class="emer-cat-sub">Life-threatening</div></div>
+      </div>
+    </div>
+    <div id="emerDetail" style="display:none">
+      <button onclick="backToEmerTriage()" style="background:none;border:none;color:var(--ash-muted);font-size:11px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:4px">← Back</button>
+      <div id="emerDetailContent"></div>
+    </div>
+    <button class="modal-close" style="margin-top:12px" onclick="closeEmer()">Close</button>
+  </div>
+</div>
+
+<!-- SOS MODAL -->
+<div class="modal-ov hidden" id="sosModal">
+  <div class="modal" style="max-width:500px;max-height:90vh;overflow-y:auto;border-color:rgba(224,82,82,0.5)">
+    <div class="modal-h">
+      <div class="modal-ico" style="background:rgba(224,82,82,0.2);border-color:rgba(224,82,82,0.5);font-size:20px">⚠</div>
+      <div><div class="modal-title" style="color:var(--red)">SOS — Critical Situation</div><div class="modal-sub" id="sosSub">Mass-scale emergency</div></div>
+    </div>
+    <div id="sosConsulateAlert" style="margin-bottom:10px"></div>
+    <div id="sosGrid">
+      <div class="sos-grid">
+        <div class="sos-sc" onclick="showSOSDetail('evacuation')"><div class="sos-sc-ico">✈️</div><div class="sos-sc-label">Country Evacuation</div><div class="sos-sc-sub">War, civil unrest</div></div>
+        <div class="sos-sc" onclick="showSOSDetail('disaster')"><div class="sos-sc-ico">🌊</div><div class="sos-sc-label">Natural Disaster</div><div class="sos-sc-sub">Earthquake, flood</div></div>
+        <div class="sos-sc" onclick="showSOSDetail('attack')"><div class="sos-sc-ico">🚨</div><div class="sos-sc-label">Terror Attack</div><div class="sos-sc-sub">Active threat</div></div>
+      </div>
+    </div>
+    <div id="sosDetail" style="display:none">
+      <button onclick="backToSOSGrid()" style="background:none;border:none;color:var(--ash-muted);font-size:11px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:4px">← Back</button>
+      <div id="sosDetailContent"></div>
+    </div>
+    <button class="modal-close" style="margin-top:12px" onclick="closeSOS()">Close</button>
+  </div>
+</div>
+
+<!-- TRACKER MODAL -->
+<div class="modal-ov hidden" id="trackerModal">
+  <div class="modal" style="max-width:480px;max-height:88vh;overflow-y:auto;border-color:rgba(232,147,58,0.3)">
+    <div class="modal-h">
+      <div class="modal-ico" style="background:rgba(232,147,58,0.15);border-color:rgba(232,147,58,0.35)">📋</div>
+      <div><div class="modal-title" style="color:var(--saffron-light)" id="trackTitle">Application Status</div><div class="modal-sub" id="trackRef"></div></div>
+    </div>
+    <div id="trackBody"></div>
+    <button class="modal-close" style="margin-top:12px" onclick="closeTracker()">Close</button>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="modal-ov hidden" id="profileModal">
+  <div class="modal" style="max-width:460px;max-height:88vh;overflow-y:auto;border-color:rgba(232,147,58,0.3)">
+    <div class="modal-h">
+      <div class="modal-ico" style="background:rgba(232,147,58,0.15);border-color:rgba(232,147,58,0.35);font-size:18px">&#128100;</div>
+      <div>
+        <div class="modal-title" style="color:var(--saffron-light)">Your Consular Profile</div>
+        <div class="modal-sub">Personalised consular context</div>
+      </div>
+    </div>
+    <div id="profileBody"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="goBack();closeProfile()" style="flex:1;padding:8px;background:rgba(232,147,58,0.1);border:1px solid rgba(232,147,58,0.3);color:var(--saffron-light);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif">&#9998; Change Profile</button>
+      <button class="modal-close" style="flex:1;margin-top:0" onclick="closeProfile()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+
+// ═══════════════════════════════════════════════════════════
+// CONSULAI — Complete Clean Build
+// ═══════════════════════════════════════════════════════════
+
+// ── HELPERS ──────────────────────────────────────────────────
+function $(id){return document.getElementById(id);}
+function safeSet(id,v){var e=$(id);if(e)e.textContent=v;}
+function safeHtml(id,v){var e=$(id);if(e)e.innerHTML=v;}
+function mdToHtml(t){
+  if(!t)return'';t=t.trim();
+  t=t.replace(/^### (.+)$/gm,'<p class="resp-h3">$1</p>');
+  t=t.replace(/^## (.+)$/gm,'<p class="resp-h2">$1</p>');
+  t=t.replace(/^# (.+)$/gm,'<p class="resp-h1">$1</p>');
+  t=t.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  t=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  t=t.replace(/\*([^*\n]+?)\*/g,'<em>$1</em>');
+  t=t.replace(/^[-]{3,}$/gm,'<hr class="resp-hr">');
+  t=t.replace(/((?:^[ \t]*[•\-] .+$\n?)+)/gm,function(b){
+    return'<ul class="resp-list">'+b.trim().split('\n').map(function(l){return'<li>'+l.replace(/^[ \t]*[•\-] /,'')+'</li>';}).join('')+'</ul>';
+  });
+  t=t.replace(/((?:^[ \t]*\d+[.)\s] .+$\n?)+)/gm,function(b){
+    return'<ol class="resp-list">'+b.trim().split('\n').map(function(l){return'<li>'+l.replace(/^[ \t]*\d+[.)\s] /,'')+'</li>';}).join('')+'</ol>';
+  });
+  t=t.replace(/`([^`]+)`/g,'<code class="resp-code">$1</code>');
+  return t.split(/\n{2,}/).map(function(p){
+    p=p.trim();if(!p)return'';
+    if(p.match(/^<(div|ul|ol|hr|p )/i))return p;
+    return'<p class="resp-p">'+p.replace(/\n/g,' ')+'</p>';
+  }).filter(Boolean).join('');
+}
+
+// ── DATA ─────────────────────────────────────────────────────
+var C = {
+  IN:{name:'India',        flag:'🇮🇳',dem:'Indian',      emer:'+91-11-2419-8000', mfa:'https://www.mea.gov.in'},
+  PK:{name:'Pakistan',     flag:'🇵🇰',dem:'Pakistani',   emer:'+92-51-9207100',   mfa:'https://mofa.gov.pk'},
+  BD:{name:'Bangladesh',   flag:'🇧🇩',dem:'Bangladeshi', emer:'+880-2-9880062',   mfa:'https://mofa.gov.bd'},
+  LK:{name:'Sri Lanka',    flag:'🇱🇰',dem:'Sri Lankan',  emer:'+94-11-2325103',   mfa:'https://mfa.gov.lk'},
+  NP:{name:'Nepal',        flag:'🇳🇵',dem:'Nepali',      emer:'+977-1-4200458',   mfa:'https://mofa.gov.np'},
+  PH:{name:'Philippines',  flag:'🇵🇭',dem:'Filipino',    emer:'+63-2-8834-3000',  mfa:'https://dfa.gov.ph'},
+  NG:{name:'Nigeria',      flag:'🇳🇬',dem:'Nigerian',    emer:'+234-9-4618000',   mfa:'https://foreignaffairs.gov.ng'},
+  GH:{name:'Ghana',        flag:'🇬🇭',dem:'Ghanaian',    emer:'+233-30-2741000',  mfa:'https://mfa.gov.gh'},
+  KE:{name:'Kenya',        flag:'🇰🇪',dem:'Kenyan',      emer:'+254-20-3318000',  mfa:'https://mfa.go.ke'},
+  EG:{name:'Egypt',        flag:'🇪🇬',dem:'Egyptian',    emer:'+20-2-27974000',   mfa:'https://www.mfa.gov.eg'},
+  DE:{name:'Germany',      flag:'🇩🇪',dem:'German',      emer:'+49-30-1817-2000', mfa:'https://www.auswaertiges-amt.de'},
+  US:{name:'USA',          flag:'🇺🇸',dem:'American',    emer:'+1-202-501-4444',  mfa:'https://travel.state.gov'},
+  GB:{name:'UK',           flag:'🇬🇧',dem:'British',     emer:'+44-20-7008-5000', mfa:'https://www.gov.uk/government/organisations/foreign-commonwealth-development-office'},
+  FR:{name:'France',       flag:'🇫🇷',dem:'French',      emer:'+33-1-43-17-67-67',mfa:'https://www.diplomatie.gouv.fr'},
+  NL:{name:'Netherlands',  flag:'🇳🇱',dem:'Dutch',       emer:'+31-70-3485485',   mfa:'https://www.government.nl/ministries/ministry-of-foreign-affairs'},
+  CA:{name:'Canada',       flag:'🇨🇦',dem:'Canadian',    emer:'+1-613-996-8885',  mfa:'https://travel.gc.ca'},
+  AU:{name:'Australia',    flag:'🇦🇺',dem:'Australian',  emer:'+61-2-6261-3305',  mfa:'https://www.smartraveller.gov.au'},
+  SG:{name:'Singapore',    flag:'🇸🇬',dem:'Singaporean', emer:'+65-6379-8800',    mfa:'https://www.mfa.gov.sg'},
+  AE:{name:'UAE',          flag:'🇦🇪',dem:'Emirati',     emer:'+971-2-495-1235',  mfa:'https://www.mofa.gov.ae'},
+  SA:{name:'Saudi Arabia', flag:'🇸🇦',dem:'Saudi',       emer:'+966-11-488-3800', mfa:'https://www.mofa.gov.sa'},
+  QA:{name:'Qatar',        flag:'🇶🇦',dem:'Qatari',      emer:'+974-4483-7777',   mfa:'https://www.mofa.gov.qa'},
+  MY:{name:'Malaysia',     flag:'🇲🇾',dem:'Malaysian',   emer:'+60-3-2148-8000',  mfa:'https://www.kln.gov.my'},
+  KW:{name:'Kuwait',       flag:'🇰🇼',dem:'Kuwaiti',    emer:'+965-2-2429-6000', mfa:'https://www.mofa.gov.kw'},
+  BH:{name:'Bahrain',      flag:'🇧🇭',dem:'Bahraini',    emer:'+973-17-212-600',  mfa:'https://www.mofa.gov.bh'},
+  OM:{name:'Oman',         flag:'🇴🇲',dem:'Omani',       emer:'+968-2-4609-3000', mfa:'https://www.mofa.gov.om'},
+  IT:{name:'Italy',        flag:'🇮🇹',dem:'Italian',     emer:'+39-06-36-91-1',   mfa:'https://www.esteri.it'},
+  SE:{name:'Sweden',       flag:'🇸🇪',dem:'Swedish',     emer:'+46-8-405-1000',   mfa:'https://www.swedenabroad.se'},
+  NO:{name:'Norway',       flag:'🇳🇴',dem:'Norwegian',   emer:'+47-23-95-0000',   mfa:'https://www.norway.no/en/missions'}
+};
+
+// German consulates — used when nationality=IN and residence=DE
+// Pakistani consulates in Germany
+var GC_PK = {
+  berlin:{name:'Embassy of Pakistan, Berlin',addr:'Schaperstraße 29, 10719 Berlin',phone:'+49-30-212-440',url:'https://pakemb.de/',note:'Serves Berlin and eastern Germany',states:['Berlin','Brandenburg','Mecklenburg-Vorpommern','Sachsen','Sachsen-Anhalt','Thüringen'],emer:'+49-30-212-440',hours:'09:00–13:00 Mon–Fri'},
+  frankfurt:{name:'Consulate General of Pakistan, Frankfurt',addr:'Niedenau 63, 60325 Frankfurt',phone:'+49-69-971-9890',url:'https://pakconsulateff.de/',note:'Serves western and southern Germany',states:['Hessen','Bayern','Baden-Württemberg','Rheinland-Pfalz','Saarland','Nordrhein-Westfalen','Niedersachsen','Bremen','Hamburg','Schleswig-Holstein'],emer:'+49-69-971-9890',hours:'09:00–13:00 Mon–Fri'}
+};
+var GC_BD = {
+  berlin:{name:'Embassy of Bangladesh, Berlin',addr:'Dovestraße 1, 10587 Berlin',phone:'+49-30-398-97500',url:'https://bdembassyberlin.de/',note:'Main embassy — all consular services',states:['Berlin','Brandenburg','Mecklenburg-Vorpommern','Sachsen','Sachsen-Anhalt','Thüringen','Hamburg','Schleswig-Holstein','Niedersachsen','Bremen'],emer:'+49-30-398-97500',hours:'09:00–13:00 Mon–Fri'},
+  frankfurt:{name:'Honorary Consulate Bangladesh, Frankfurt',addr:'Hanauer Landstraße 291–293, 60314 Frankfurt',phone:'+49-30-398-97500',url:'https://bdembassyberlin.de/',note:'Limited services — full consular matters via Berlin embassy',states:['Hessen','Bayern','Baden-Württemberg','Rheinland-Pfalz','Saarland','Nordrhein-Westfalen'],emer:'+49-30-398-97500',hours:'09:00–12:00 Mon–Wed'}
+};
+var GC_NG = {
+  berlin:{name:'Embassy of Nigeria, Berlin',addr:'Neue Jakobstraße 4, 10179 Berlin',phone:'+49-30-212-300',url:'https://nigeriaembassygermany.org/',note:'Main embassy — all consular services',states:['Berlin','Brandenburg','Mecklenburg-Vorpommern','Sachsen','Sachsen-Anhalt','Thüringen','Hamburg','Schleswig-Holstein','Niedersachsen','Bremen'],emer:'+49-30-212-300',hours:'09:00–13:00 Mon–Fri'},
+  frankfurt:{name:'Consulate General of Nigeria, Frankfurt',addr:'Hamburger Allee 2-10, 60486 Frankfurt',phone:'+49-69-791-9640',url:'https://cgfrankfurt.com/',note:'Serves western and southern Germany',states:['Hessen','Bayern','Baden-Württemberg','Rheinland-Pfalz','Saarland','Nordrhein-Westfalen'],emer:'+49-69-791-9640',hours:'09:00–13:00 Mon–Fri'}
+};
+var GC_EG = {
+  berlin:{name:'Embassy of Egypt, Berlin',addr:'Stauffenbergstraße 6-7, 10785 Berlin',phone:'+49-30-477-5470',url:'https://egyptembassyberlin.de/',note:'Main embassy — serves northern and eastern Germany',states:['Berlin','Brandenburg','Mecklenburg-Vorpommern','Sachsen','Sachsen-Anhalt','Thüringen','Hamburg','Schleswig-Holstein','Niedersachsen','Bremen'],emer:'+49-30-477-5470',hours:'09:00–14:00 Mon–Fri'},
+  frankfurt:{name:'Consulate General of Egypt, Frankfurt',addr:'Lyonerstraße 15, 60528 Frankfurt',phone:'+49-69-666-2040',url:'http://egyptconsulatefrank.org/',note:'Serves central and western Germany',states:['Hessen','Nordrhein-Westfalen','Rheinland-Pfalz','Saarland'],emer:'+49-69-666-2040',hours:'09:00–13:00 Mon–Fri'},
+  munich:{name:'Consulate General of Egypt, Munich',addr:'Lenbachplatz 3, 80333 Munich',phone:'+49-89-552-4860',url:'https://egyptconsulatmunich.de/',note:'Serves southern Germany',states:['Bayern','Baden-Württemberg'],emer:'+49-89-552-4860',hours:'09:00–13:00 Mon–Fri'}
+};
+var GC = {
+  berlin:{name:'Embassy of India, Berlin',addr:'Tiergartenstrasse 17, 10785 Berlin',phone:'+49-30-2579-500',email:'cons.berlin@mea.gov.in',url:'https://appointment.indianembassyberlin.gov.in/',note:'Online appointment required',states:['Berlin','Brandenburg','Mecklenburg-Vorpommern','Sachsen','Sachsen-Anhalt','Thüringen'],emer:'+49-30-2579-500',hours:'09:00–17:00 Mon–Fri'},
+  frankfurt:{name:'Consulate General of India, Frankfurt',addr:'Friedrich-Ebert-Anlage 26, 60325 Frankfurt',phone:'+49-69-1530-050',email:'cgi.frankfurt@mea.gov.in',url:'https://cgifrankfurt.gov.in/pages/consular-services',note:'Walk-in accepted — no appointment needed',states:['Hessen','Nordrhein-Westfalen','Rheinland-Pfalz','Saarland'],emer:'+49-69-1530-050',hours:'09:00–16:30 Mon–Fri'},
+  hamburg:{name:'Consulate General of India, Hamburg',addr:'Kohlhöfen 21, 20355 Hamburg',phone:'+49-40-338-036',email:'cons.hamburg@mea.gov.in',url:'https://cgihamburg.gov.in/pages/consular-services',note:'Online appointment only',states:['Hamburg','Bremen','Schleswig-Holstein','Niedersachsen'],emer:'+49-152-18925690',hours:'09:30–16:00 Mon–Fri'},
+  munich:{name:'Consulate General of India, Munich',addr:'Widenmayerstrasse 15, 80538 Munich',phone:'+49-89-210-23943',email:'cons.munich@mea.gov.in',url:'https://cgimunich.gov.in/pages/appointment',note:'Appointment via Passport Seva portal',states:['Bayern','Baden-Württemberg'],emer:'+49-1511-766-2009',hours:'09:00–16:30 Mon–Fri'}
+};
+var S2C_PK = {'Berlin':'berlin','Brandenburg':'berlin','Mecklenburg-Vorpommern':'berlin','Sachsen':'berlin','Sachsen-Anhalt':'berlin','Thüringen':'berlin','Hessen':'frankfurt','Bayern':'frankfurt','Baden-Württemberg':'frankfurt','Rheinland-Pfalz':'frankfurt','Saarland':'frankfurt','Nordrhein-Westfalen':'frankfurt','Niedersachsen':'frankfurt','Bremen':'frankfurt','Hamburg':'frankfurt','Schleswig-Holstein':'frankfurt'};
+var S2C_BD = {'Berlin':'berlin','Brandenburg':'berlin','Mecklenburg-Vorpommern':'berlin','Sachsen':'berlin','Sachsen-Anhalt':'berlin','Thüringen':'berlin','Hamburg':'berlin','Schleswig-Holstein':'berlin','Niedersachsen':'berlin','Bremen':'berlin','Hessen':'frankfurt','Bayern':'frankfurt','Baden-Württemberg':'frankfurt','Rheinland-Pfalz':'frankfurt','Saarland':'frankfurt','Nordrhein-Westfalen':'frankfurt'};
+var S2C_NG = {'Berlin':'berlin','Brandenburg':'berlin','Mecklenburg-Vorpommern':'berlin','Sachsen':'berlin','Sachsen-Anhalt':'berlin','Thüringen':'berlin','Hamburg':'berlin','Schleswig-Holstein':'berlin','Niedersachsen':'berlin','Bremen':'berlin','Hessen':'frankfurt','Bayern':'frankfurt','Baden-Württemberg':'frankfurt','Rheinland-Pfalz':'frankfurt','Saarland':'frankfurt','Nordrhein-Westfalen':'frankfurt'};
+var S2C_EG = {'Berlin':'berlin','Brandenburg':'berlin','Mecklenburg-Vorpommern':'berlin','Sachsen':'berlin','Sachsen-Anhalt':'berlin','Thüringen':'berlin','Hamburg':'berlin','Schleswig-Holstein':'berlin','Niedersachsen':'berlin','Bremen':'berlin','Hessen':'frankfurt','Nordrhein-Westfalen':'frankfurt','Rheinland-Pfalz':'frankfurt','Saarland':'frankfurt','Bayern':'munich','Baden-Württemberg':'munich'};
+var S2C = {Berlin:'berlin',Brandenburg:'berlin','Mecklenburg-Vorpommern':'berlin',Sachsen:'berlin','Sachsen-Anhalt':'berlin','Thüringen':'berlin',Hessen:'frankfurt','Nordrhein-Westfalen':'frankfurt','Rheinland-Pfalz':'frankfurt',Saarland:'frankfurt',Hamburg:'hamburg',Bremen:'hamburg','Schleswig-Holstein':'hamburg',Niedersachsen:'hamburg',Bayern:'munich','Baden-Württemberg':'munich'};
+
+// Context data per nationality-residence pair
+// For combinations without specific data, a smart generic fallback is generated
+var CTX = {
+  'IN-DE':{office:'See jurisdiction selector',portal:'https://passportindia.gov.in',renewal:'6-8 weeks',ec:'24-48 hrs',oci:'Via VFS Global Germany',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'Book Appointment',i:'📅',u:'https://appointment.indianembassyberlin.gov.in/',n:'Select your state for correct office'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'Fresh OCI / renewal'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'},{l:'VFS Germany',i:'🏢',u:'https://www.vfsglobal.com/india/germany',n:'Visa applications'},{l:'e-SEWA Portal',i:'💻',u:'https://indianconsularservices.mea.gov.in',n:'Misc consular services'},{l:'eCARe Portal',i:'🕊️',u:'https://ecare.gov.in',n:'Repatriation of remains'}]},
+  'IN-US':{office:'Nearest Indian Consulate (NY/SF/Chicago/Houston)',portal:'https://passportindia.gov.in',renewal:'8-10 weeks',ec:'Same day',oci:'Via BLS International USA',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'BLS International',i:'🏢',u:'https://blsinternational.com/india',n:'Passport / OCI services'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'Fresh OCI / renewal'},{l:'Indian Embassy USA',i:'🏛️',u:'https://www.indianembassyusa.gov.in',n:'Embassy official site'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'},{l:'eCARe Portal',i:'🕊️',u:'https://ecare.gov.in',n:'Repatriation of remains'}]},
+  'IN-GB':{office:'Indian High Commission, London',portal:'https://passportindia.gov.in',renewal:'6-8 weeks (VFS UK)',ec:'24 hrs',oci:'Via VFS Global UK',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'VFS Global UK',i:'🏢',u:'https://www.vfsglobal.com/india/unitedkingdom',n:'Passport / OCI / visa'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'Fresh OCI / renewal'},{l:'High Commission London',i:'🏛️',u:'https://hcilondon.gov.in',n:'Official site'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-AE':{office:'Consulate General of India, Dubai',portal:'https://passportindia.gov.in',renewal:'3-4 weeks (Tatkal: 1 wk)',ec:'24 hrs',oci:'Via VFS Global UAE',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'VFS Global UAE',i:'🏢',u:'https://www.vfsglobal.com/india/uae',n:'Passport / OCI / visa'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'Fresh OCI / renewal'},{l:'Indian Embassy UAE',i:'🏛️',u:'https://www.indembassyuae.gov.in',n:'Official site'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-CA':{office:'Indian High Commission / Consulate in Canada',portal:'https://passportindia.gov.in',renewal:'8-10 weeks',ec:'48 hrs',oci:'Via BLS International Canada',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'BLS International Canada',i:'🏢',u:'https://blsinternational.com/india',n:'Passport / OCI services'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'Fresh OCI / renewal'},{l:'Indian Embassy Canada',i:'🏛️',u:'https://www.hciottawa.ca',n:'Official site'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-AU':{office:'Indian High Commission / Consulate in Australia',portal:'https://passportindia.gov.in',renewal:'8-10 weeks',ec:'48 hrs',oci:'Via VFS Global Australia',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'VFS Global Australia',i:'🏢',u:'https://www.vfsglobal.com/india/australia',n:'Passport / OCI / visa'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'Fresh OCI / renewal'},{l:'Indian High Commission',i:'🏛️',u:'https://www.hcicanberra.gov.in',n:'Official site'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-SG':{office:'Indian High Commission, Singapore',portal:'https://passportindia.gov.in',renewal:'6-8 weeks',ec:'24-48 hrs',oci:'Via IHC Singapore',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'Indian High Commission SG',i:'🏛️',u:'https://www.hcisingapore.gov.in',n:'Official site'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'Fresh OCI / renewal'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-SA':{office:'Indian Embassy, Riyadh / CGI Jeddah / CGI Dammam',portal:'https://passportindia.gov.in',renewal:'4-6 weeks',ec:'24 hrs',oci:'Via VFS Global Saudi Arabia',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'VFS Saudi Arabia',i:'🏢',u:'https://www.vfsglobal.com/india/saudiarabia',n:'Passport / OCI'},{l:'Indian Embassy Saudi',i:'🏛️',u:'https://www.eoiriyadh.gov.in',n:'Official site'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-QA':{office:'Indian Embassy, Doha',portal:'https://passportindia.gov.in',renewal:'4-6 weeks',ec:'24 hrs',oci:'Via VFS Qatar',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'Indian Embassy Qatar',i:'🏛️',u:'https://www.eoiqa.gov.in',n:'Official site'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'OCI services'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-MY':{office:'Indian High Commission, Kuala Lumpur',portal:'https://passportindia.gov.in',renewal:'6-8 weeks',ec:'24-48 hrs',oci:'Via IHC Kuala Lumpur',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'Indian High Commission MY',i:'🏛️',u:'https://www.hcikl.gov.in',n:'Official site'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-FR':{office:'Indian Embassy, Paris',portal:'https://passportindia.gov.in',renewal:'6-8 weeks',ec:'24-48 hrs',oci:'Via IHC Paris',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'Indian Embassy Paris',i:'🏛️',u:'https://www.eoiparis.gov.in',n:'Official site'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'OCI services'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-NL':{office:'Indian Embassy, The Hague',portal:'https://passportindia.gov.in',renewal:'6-8 weeks',ec:'24-48 hrs',oci:'Via IHC The Hague',links:[{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport applications'},{l:'Indian Embassy Netherlands',i:'🏛️',u:'https://www.indianembassy.nl',n:'Official site'},{l:'OCI Portal',i:'🎫',u:'https://ociservices.gov.in',n:'OCI services'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances & emergency'}]},
+  'IN-KW':{office:'Indian Embassy, Kuwait City',portal:'https://passportindia.gov.in',renewal:'4-6 weeks',ec:'24 hrs',oci:'Via VFS Global Kuwait',links:[{l:'Indian Embassy Kuwait',i:'🏛️',u:'https://www.indembkwt.gov.in',n:'Official site'},{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport services'},{l:'VFS Kuwait',i:'🏢',u:'https://www.vfsglobal.com/india/kuwait',n:'Visa & OCI'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances'}]},
+  'IN-BH':{office:'Indian Embassy, Manama',portal:'https://passportindia.gov.in',renewal:'4-6 weeks',ec:'24 hrs',oci:'Via VFS Global Bahrain',links:[{l:'Indian Embassy Bahrain',i:'🏛️',u:'https://www.indembmanama.gov.in',n:'Official site'},{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport services'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances'}]},
+  'IN-OM':{office:'Indian Embassy, Muscat',portal:'https://passportindia.gov.in',renewal:'4-6 weeks',ec:'24 hrs',oci:'Via VFS Global Oman',links:[{l:'Indian Embassy Oman',i:'🏛️',u:'https://www.eoioman.gov.in',n:'Official site'},{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport services'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances'}]},
+  'IN-IT':{office:'Indian Embassy, Rome / CGI Milan',portal:'https://passportindia.gov.in',renewal:'6-8 weeks',ec:'24-48 hrs',oci:'Via VFS Global Italy',links:[{l:'Indian Embassy Italy',i:'🏛️',u:'https://www.indianembassy.it',n:'Official site'},{l:'VFS Italy',i:'🏢',u:'https://www.vfsglobal.com/india/italy',n:'Visa & OCI'},{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport services'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances'}]},
+  'IN-SE':{office:'Indian Embassy, Stockholm',portal:'https://passportindia.gov.in',renewal:'6-8 weeks',ec:'24-48 hrs',oci:'Via Embassy Stockholm',links:[{l:'Indian Embassy Sweden',i:'🏛️',u:'https://www.indembstockholm.gov.in',n:'Official site'},{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport services'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances'}]},
+  'IN-NO':{office:'Indian Embassy, Oslo',portal:'https://passportindia.gov.in',renewal:'6-8 weeks',ec:'24-48 hrs',oci:'Via Embassy Oslo',links:[{l:'Indian Embassy Norway',i:'🏛️',u:'https://www.indemboslo.gov.in',n:'Official site'},{l:'Passport Seva',i:'📘',u:'https://passportindia.gov.in',n:'Passport services'},{l:'MADAD Portal',i:'🤝',u:'https://madad.gov.in',n:'Grievances'}]}
+};
+  // For PK, BD, LK, NP, PH, NG, GH, KE, EG — generate context dynamically
+function getCtx(nat, res) {
+  var key = nat + '-' + res;
+  if (CTX[key]) return CTX[key];
+  var n = C[nat], r = C[res];
+  if (!n || !r) return null;
+  // Generate nationality-specific context for any combination
+  var office = n.name + ' Embassy / High Commission in ' + r.name;
+  var links = [
+    {l: n.name + ' MFA', i: '🏛️', u: n.mfa, n: 'Official Ministry of Foreign Affairs'},
+    {l: n.name + ' Passport Portal', i: '📘', u: n.mfa + '/consular', n: 'Passport & consular services'},
+    {l: r.name + ' Emergency', i: '📞', u: 'tel:'+r.emer, n: 'Local emergency: '+r.emer}
+  ];
+  // Add nationality-specific portals
+  if(nat==='PH') links = [
+    {l:'DFA Philippines',i:'🏛️',u:'https://www.dfa.gov.ph',n:'Philippine passport & consular'},
+    {l:'OWWA Portal',i:'🌟',u:'https://onlinemembership.owwa.gov.ph',n:'OFW welfare membership'},
+    {l:'POEA Services',i:'💼',u:'https://www.poea.gov.ph',n:'Overseas employment'},
+    {l:'e-Passport Appointment',i:'📅',u:'https://www.passport.gov.ph',n:'Book passport appointment'},
+    {l:r.name+' Emergency',i:'📞',u:'tel:'+r.emer,n:'Local emergency: '+r.emer}
+  ];
+  else if(nat==='PK') links = [
+    {l:'Pakistani Embassy',i:'🏛️',u:n.mfa,n:'Official embassy site'},
+    {l:'NADRA NICOP',i:'🪪',u:'https://id.nadra.gov.pk',n:'Overseas identity card'},
+    {l:'NADRA Passport',i:'📘',u:'https://www.nadra.gov.pk',n:'Pakistani passport services'},
+    {l:'Overseas Pakistanis',i:'🌍',u:'https://www.op.gov.pk',n:'Welfare & community'},
+    {l:r.name+' Emergency',i:'📞',u:'tel:'+r.emer,n:'Local emergency: '+r.emer}
+  ];
+  else if(nat==='BD') links = [
+    {l:'Bangladesh MFA',i:'🏛️',u:n.mfa,n:'Ministry of Foreign Affairs'},
+    {l:'BD Passport Portal',i:'📘',u:'https://www.passport.gov.bd',n:'Bangladeshi passport services'},
+    {l:'BOESL Services',i:'💼',u:'https://boesl.gov.bd',n:'Overseas employment'},
+    {l:r.name+' Emergency',i:'📞',u:'tel:'+r.emer,n:'Local emergency: '+r.emer}
+  ];
+  else if(nat==='LK') links = [
+    {l:'Sri Lanka MFA',i:'🏛️',u:n.mfa,n:'Ministry of Foreign Affairs'},
+    {l:'Dept of Immigration SL',i:'📘',u:'https://www.immigration.gov.lk',n:'Passport & immigration'},
+    {l:'SLBFE',i:'💼',u:'https://www.slbfe.lk',n:'Bureau of Foreign Employment'},
+    {l:r.name+' Emergency',i:'📞',u:'tel:'+r.emer,n:'Local emergency: '+r.emer}
+  ];
+  else if(nat==='NP') links = [
+    {l:'Nepal MFA',i:'🏛️',u:n.mfa,n:'Ministry of Foreign Affairs'},
+    {l:'Nepal Passport Portal',i:'📘',u:'https://www.dip.gov.np',n:'Passport services'},
+    {l:'DoFE Nepal',i:'💼',u:'https://dofe.gov.np',n:'Foreign employment'},
+    {l:r.name+' Emergency',i:'📞',u:'tel:'+r.emer,n:'Local emergency: '+r.emer}
+  ];
+  else if(nat==='NG') links = [
+    {l:'Nigeria MFA',i:'🏛️',u:n.mfa,n:'Ministry of Foreign Affairs'},
+    {l:'Nigeria Immigration',i:'📘',u:'https://www.immigration.gov.ng',n:'Passport & immigration'},
+    {l:r.name+' Emergency',i:'📞',u:'tel:'+r.emer,n:'Local emergency: '+r.emer}
+  ];
+  else if(nat==='GH') links = [
+    {l:'Ghana MFA',i:'🏛️',u:n.mfa,n:'Ministry of Foreign Affairs'},
+    {l:'Ghana Immigration',i:'📘',u:'https://www.ghanaimmigration.org',n:'Passport & immigration'},
+    {l:r.name+' Emergency',i:'📞',u:'tel:'+r.emer,n:'Local emergency: '+r.emer}
+  ];
+  else if(nat==='KE') links = [
+    {l:'Kenya MFA',i:'🏛️',u:n.mfa,n:'Ministry of Foreign Affairs'},
+    {l:'Kenya Directorate of Immigration',i:'📘',u:'https://www.immigration.go.ke',n:'Passport & immigration'},
+    {l:r.name+' Emergency',i:'📞',u:'tel:'+r.emer,n:'Local emergency: '+r.emer}
+  ];
+  else if(nat==='EG') links = [
+    {l:'Egypt MFA',i:'🏛️',u:n.mfa,n:'Ministry of Foreign Affairs'},
+    {l:'Egypt Passport Authority',i:'📘',u:'https://www.moi.gov.eg',n:'Passport services'},
+    {l:r.name+' Emergency',i:'📞',u:'tel:'+r.emer,n:'Local emergency: '+r.emer}
+  ];
+  return {
+    office: office,
+    portal: n.mfa,
+    renewal: '6-10 weeks (varies by mission)',
+    ec: '24-72 hrs',
+    oci: null,
+    links: links
+  };
+}
+
+function getConsulate(state){
+  var map,data;
+  if(NAT==='PK'){map=S2C_PK;data=GC_PK;}
+  else if(NAT==='BD'){map=S2C_BD;data=GC_BD;}
+  else if(NAT==='NG'){map=S2C_NG;data=GC_NG;}
+  else if(NAT==='EG'){map=S2C_EG;data=GC_EG;}
+  else{map=S2C;data=GC;}
+  var key=map[state];if(!key)return null;
+  return data[key]||null;
+}
+
+var VISA = {
+  'IN-DE':'required','IN-US':'required','IN-GB':'required','IN-AE':'on_arrival','IN-CA':'required','IN-AU':'required','IN-SG':'required','IN-FR':'required','IN-NL':'required','IN-SA':'required','IN-QA':'on_arrival','IN-MY':'required',
+  'PK-DE':'required','PK-US':'required','PK-GB':'required','PK-AE':'on_arrival','PK-SA':'required',
+  'BD-DE':'required','BD-US':'required','BD-GB':'required','BD-AE':'on_arrival',
+  'LK-DE':'required','LK-US':'required','LK-GB':'required','LK-AE':'on_arrival',
+  'NP-DE':'required','NP-US':'required','NP-GB':'required','NP-IN':'required',
+  'PH-DE':'required','PH-US':'required','PH-GB':'required','PH-AE':'on_arrival',
+  'NG-DE':'required','NG-US':'required','NG-GB':'required','NG-AE':'required',
+  'GH-DE':'required','GH-US':'required','GH-GB':'required','GH-AE':'required',
+  'KE-DE':'required','KE-US':'required','KE-GB':'required','KE-AE':'required',
+  'EG-DE':'required','EG-US':'required','EG-GB':'required','EG-AE':'required',
+  'DE-IN':'evisa','US-IN':'required','GB-IN':'evisa','DE-US':'not_required','DE-GB':'not_required','DE-AE':'not_required',
+  'US-DE':'not_required','US-GB':'not_required','US-AE':'not_required',
+  'GB-DE':'not_required','GB-US':'not_required','GB-AE':'not_required'
+};
+
+function getEmerData() {
+  var nat = C[NAT] || C.IN;
+  var res = C[RES] || C.DE;
+  var con = (NAT==='IN'&&RES==='DE'&&STATE) ? getConsulate(STATE) : null;
+  var embName = con ? con.name : (nat.name + ' Embassy');
+  var embPhone = con ? con.emer : nat.emer;
+  var localEmer = res.emer;
+  var localPol = (RES==='DE') ? '110' : res.emer;
+  var localAmb = (RES==='DE') ? '112' : res.emer;
+  var localLabel = res.name + ' Emergency';
+  var polLabel = res.name + ' Police';
+  var crisisLine = (RES==='DE') ? 'Telefonseelsorge (DE)' : (res.name + ' Crisis Line');
+  var crisisNum  = (RES==='DE') ? '0800 111 0 111' : res.emer;
+  var legalAid   = (RES==='DE') ? '0800 100 3210' : res.emer;
+  var sozialamt  = (RES==='DE') ? '115 (Sozialamt DE)' : (res.name + ' Social Services');
+  var sozialNum  = (RES==='DE') ? '115' : res.emer;
+
+  return {
+    death:{t:'Death of a '+nat.dem+' National Abroad',s:[
+      {h:'Contact local authorities',b:'Obtain a <strong>local death certificate</strong> from '+res.name+' police. Required for all further steps.'},
+      {h:'Notify '+embName,b:'Call <strong>'+embPhone+'</strong> immediately for repatriation guidance.'},
+      {h:'Arrange repatriation',b:'Embassy assists with embalming, coffin sealing, and air transport documents.'},
+      {h:'Register death officially',b:'Register death at the embassy for insurance and property matters in '+nat.name+'.'}
+    ],hot:[embName,embPhone,localLabel,localAmb]},
+
+    accident:{t:'Accident / Serious Injury in '+res.name,s:[
+      {h:'Call emergency services',b:'<strong>'+localAmb+'</strong> for ambulance. <strong>'+localPol+'</strong> for police.'},
+      {h:'Go to hospital',b:'All hospitals in '+res.name+' must provide <strong>emergency treatment</strong> regardless of insurance status.'},
+      {h:'Contact '+embName,b:'Embassy assists with police liaison, legal rights, and family notification in '+nat.name+'.'},
+      {h:'Document everything',b:'Collect police report, discharge papers, photos for insurance claims.'}
+    ],hot:[localLabel,localAmb,polLabel,localPol]},
+
+    mental:{t:'Mental Health Crisis in '+res.name,s:[
+      {h:'Call crisis line now',b:'<strong>'+crisisNum+'</strong> — '+(RES==='DE'?'free, 24/7, anonymous. English available.':res.name+' crisis support line.')},
+      {h:'If in immediate danger',b:'Call <strong>'+localAmb+'</strong> or go to the nearest hospital emergency department.'},
+      {h:'Contact '+embName,b:'Embassy can provide referrals to '+nat.dem+'-speaking counsellors and community support.'},
+      {h:'Long-term support',b:'Check with local authorities in '+res.name+' — many countries cover mental health treatment.'}
+    ],hot:[crisisLine,crisisNum,embName,embPhone]},
+
+    financial:{t:'Financial Distress / Stranded in '+res.name,s:[
+      {h:'Contact '+embName+' first',b:'Call <strong>'+embPhone+'</strong>. Embassy can arrange emergency financial assistance in exceptional cases.'},
+      {h:'Repatriation assistance',b:'If no funds for return flight, embassy may facilitate an emergency loan or repatriation.'},
+      {h:'Money transfer',b:'Ask family to send funds via Western Union, Wise, or SWIFT to '+res.name+'.'},
+      {h:'Local social services',b:'Contact '+sozialamt+' ('+sozialNum+') or equivalent local welfare office in '+res.name+'.'}
+    ],hot:[embName,embPhone,sozialamt,sozialNum]},
+
+    passport:{t:'Lost / Stolen '+nat.name+' Passport in '+res.name,s:[
+      {h:'File a police report',b:'Go to nearest '+res.name+' police station. Get a written report — mandatory for passport replacement.'},
+      {h:'Inform '+embName,b:'Call <strong>'+embPhone+'</strong> with police report and 2 passport photos.'},
+      {h:'Apply for Emergency Certificate',b:'An <strong>EC</strong> is issued within 24-72 hours for one-way travel back to '+nat.name+' only.'},
+      {h:'Apply for fresh passport',b:'For continued stay, apply via your home passport portal and book a consulate appointment.'}
+    ],hot:[polLabel,localPol,embName,embPhone]},
+
+    arrested:{t:'Arrested / Detained in '+res.name,s:[
+      {h:'Request consular notification',b:'Under the <strong>Vienna Convention</strong> you have the right to contact <strong>'+embName+'</strong>.'},
+      {h:'Do not sign anything',b:'Do not sign documents without a lawyer or consular representative present.'},
+      {h:'Embassy appoints a lawyer',b:'Call <strong>'+embPhone+'</strong> — embassy provides list of lawyers and can visit you in detention.'},
+      {h:'Apply for legal aid',b:'Apply for legal aid in '+res.name+' if you cannot afford a lawyer.'}
+    ],hot:[embName,embPhone,res.name+' Legal Aid',legalAid]},
+
+    hostage:{t:'Hostage / Kidnapping Situation',s:[
+      {h:'Call emergency if safe',b:'Call <strong>'+localAmb+'</strong>. Stay calm, do not provoke captors.'},
+      {h:'Family must contact embassy',b:'Call '+embName+' at <strong>'+embPhone+'</strong> immediately. Also contact '+nat.name+' MFA.'},
+      {h:'Do not pay ransom without guidance',b:'Embassy has crisis protocols and works with local law enforcement in '+res.name+'.'},
+      {h:'Preserve all communications',b:'Save all messages from captors and hand to authorities.'}
+    ],hot:[polLabel,localPol,embName,embPhone]},
+
+    missing:{t:'Missing '+nat.dem+' National in '+res.name,s:[
+      {h:'File missing persons report immediately',b:'Contact <strong>'+res.name+' police ('+localPol+')</strong> within 24 hours.'},
+      {h:'Notify '+embName,b:'Call <strong>'+embPhone+'</strong>. Embassy liaises with local authorities and issues appeals.'},
+      {h:'Register with '+nat.name+' MFA',b:'Contact the Ministry of Foreign Affairs in '+nat.name+' to register the case officially.'},
+      {h:'Request Interpol notice',b:'Embassy can coordinate an Interpol Yellow Notice if cross-border travel is suspected.'}
+    ],hot:[polLabel,localPol,embName,embPhone]},
+
+    medical:{t:'Critical Medical Emergency in '+res.name,s:[
+      {h:'Call ambulance immediately',b:'Call <strong>'+localAmb+'</strong>. State your location clearly and stay on the line.'},
+      {h:'Do not move if spinal injury suspected',b:'Apply pressure to severe bleeding. Begin CPR if trained.'},
+      {h:'Notify '+embName,b:'Call <strong>'+embPhone+'</strong>. Embassy contacts family in '+nat.name+' and provides language liaison.'},
+      {h:'Emergency treatment cannot be refused',b:'Hospitals in '+res.name+' must provide emergency treatment regardless of insurance.'}
+    ],hot:[localLabel,localAmb,embName,embPhone]}
+  };
+}
+
+function getSOSData() {
+  var nat = C[NAT] || C.IN;
+  var res = C[RES] || C.DE;
+  var con = (NAT==='IN'&&RES==='DE'&&STATE) ? getConsulate(STATE) : null;
+  var embName = con ? con.name : (nat.name + ' Embassy');
+  var embPhone = con ? con.emer : nat.emer;
+  var localAmb = (RES==='DE') ? '112' : res.emer;
+  var localPol = (RES==='DE') ? '110' : res.emer;
+  var mfaName = nat.name + ' MFA (24/7)';
+  var mfaNum  = nat.emer;
+
+  return {
+    evacuation:{t:'Country Evacuation from '+res.name,alert:'Do NOT share your location publicly during active conflict.',s:[
+      {h:'Register with '+embName,b:'Contact your embassy at <strong>'+embPhone+'</strong> immediately. Request to be added to evacuation lists.'},
+      {h:'Follow official advisories',b:'Monitor '+nat.name+' MFA and local embassy website for assembly points and safe routes.'},
+      {h:'Carry essentials only',b:'Passport, residence permit, cash, medicines, phone charger. Leave non-essentials behind.'},
+      {h:'Proceed to assembly points',b:'Do NOT travel independently unless specifically instructed by the embassy.'},
+      {h:'Special evacuation flights',b:nat.name+' government may operate repatriation flights. Register with embassy and await communications.'}
+    ],con:[
+      {n:embName,num:embPhone,phone:true},
+      {n:mfaName,num:mfaNum,phone:true},
+      {n:res.name+' Emergency',num:localAmb,phone:true}
+    ]},
+
+    disaster:{t:'Natural Disaster in '+res.name,alert:'Carry a physical copy of your passport and emergency contacts at all times.',s:[
+      {h:'Move to safe zone immediately',b:'Follow local emergency instructions. Call <strong>'+localAmb+'</strong> for ambulance/fire, <strong>'+localPol+'</strong> for police.'},
+      {h:'Mark yourself safe',b:'Notify family in '+nat.name+' and contact '+embName+' at <strong>'+embPhone+'</strong>.'},
+      {h:'Follow local relief authorities',b:'Co-operate with '+res.name+' emergency services and relief organisations.'},
+      {h:'Request consular help if stranded',b:'Call '+embName+' emergency line for special repatriation operations.'}
+    ],con:[
+      {n:res.name+' Emergency',num:localAmb,phone:true},
+      {n:embName,num:embPhone,phone:true},
+      {n:mfaName,num:mfaNum,phone:true}
+    ]},
+
+    attack:{t:'Terror Attack / Active Threat in '+res.name,alert:'RUN • HIDE • TELL. Do not confront. Survive first.',s:[
+      {h:'RUN — HIDE — TELL',b:'Run if you can escape safely. Hide if not. Tell authorities via <strong>'+localAmb+'</strong> only when safe.'},
+      {h:'Keep phone on silent',b:'Sound reveals your location during an active threat.'},
+      {h:'Contact '+embName+' when safe',b:'Call <strong>'+embPhone+'</strong> to report your status and receive guidance.'},
+      {h:'Do not post on social media',b:'Real-time location posting compromises law enforcement operations.'}
+    ],con:[
+      {n:res.name+' Emergency',num:localAmb,phone:true},
+      {n:res.name+' Police',num:localPol,phone:true},
+      {n:embName,num:embPhone,phone:true}
+    ]}
+  };
+}
+
+// ── STATE ─────────────────────────────────────────────────────
+var NAT = 'IN', RES = 'DE', STATE = null, SVC = 'Visa Services', TYPING = false;
+
+// ── ONBOARDING ────────────────────────────────────────────────
+function filterNat(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#nationalityGrid .flag-btn').forEach(function(b){
+    b.style.display=(!q||b.textContent.toLowerCase().includes(q))?'':'none';
+  });
+}
+function filterRes(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#residenceGrid .flag-btn').forEach(function(b){
+    b.style.display=(!q||b.textContent.toLowerCase().includes(q))?'':'none';
+  });
+}
+function selectNat(el){
+  document.querySelectorAll('#nationalityGrid .flag-btn').forEach(function(b){b.classList.remove('selected');});
+  el.classList.add('selected'); NAT=el.dataset.code;
+  var picker=$('stateSection');
+    var _mcn=['IN','PK','BD','NG','EG'];var _pk=$('stateSection');
+  if(_pk&&RES==='DE'&&_mcn.indexOf(NAT)!==-1){buildStateSelector();_pk.style.display='block';}
+  else if(_pk){_pk.style.display='none';STATE=null;}
+}
+function selectRes(el){
+  document.querySelectorAll('#residenceGrid .flag-btn').forEach(function(b){b.classList.remove('selected');});
+  el.classList.add('selected'); RES=el.dataset.code;
+  var multiConNats=['IN','PK','BD','NG','EG'];
+  var picker=$('stateSection');
+  if(!picker) return;
+  if(multiConNats.indexOf(NAT)!==-1 && RES==='DE'){
+    buildStateSelector();
+    picker.style.display='block';
+  } else {
+    picker.style.display='none';
+    STATE=null;
+  }
+}
+function onStateChange(v){
+  STATE=v||null;
+  updateQuickLinks();
+  var preview=$('consulatePreview');if(!preview)return;
+  if(v){var c=getConsulate(v);if(c){safeSet('cpName',c.name);safeSet('cpAddr',c.addr);preview.style.display='block';}}
+  else{preview.style.display='none';}
+}
+
+// Sidebar service definitions per nationality group
+var SIDEBAR = {
+  // INDIA — full OCI/citizenship suite
+  IN: {
+    consular: [
+      {g:'Travel & Entry', items:[{n:'Visa Services',i:'🛂'},{n:'Travel Advisories',i:'🗺️'}]},
+      {g:'Passport', items:[{n:'Passport Renewal',i:'📘'},{n:'Lost or Damaged Passport',i:'🚫'},{n:'Passport Details Change',i:'✏️'},{n:'Newborn Passport',i:'👶'},{n:'Emergency Certificate',i:'🚨'},{n:'Asylum / Duldung Passport',i:'🔐'}]},
+      {g:'OCI & Citizenship', items:[{n:'OCI Fresh Application',i:'🏷️'},{n:'OCI Spouse Application',i:'💍'},{n:'OCI Renewal or Loss',i:'🔄'},{n:'OCI for Children Abroad',i:'👶'},{n:'PIO to OCI Conversion',i:'📋'},{n:'Citizenship and Naturalization',i:'🏛️'},{n:'Surrender Certificate',i:'📄'}]}
+    ],
+    certs: [
+      {g:'Attestation', items:[{n:'Attestation Services',i:'📎'},{n:'Police Clearance Certificate',i:'👮'}]},
+      {g:'Certificates', items:[{n:'Birth Certificate',i:'👶'},{n:'Name Change Certificate',i:'✏️'},{n:'NOC for Newborn Naming',i:'📄'},{n:'Non-Nationality Certificate',i:'🌐'},{n:'NRI Certificate',i:'🌍'},{n:'Death Certificate and Repatriation',i:'🕊️'}]},
+      {g:'Other', items:[{n:'International Driving Permit',i:'🚗'},{n:'Tatkal Passport',i:'⚡'},{n:'Apostille vs Attestation',i:'📎'},{n:'FRRO Registration',i:'🏛️'},{n:'eCARe Portal',i:'🕊️'},{n:'Postal Applications',i:'📬'}]}
+    ],
+    community: [
+      {g:'Registration', items:[{n:'NRI Registration',i:'📋'},{n:'Indian Student Registration',i:'🎓'},{n:'Overseas Voter Registration',i:'🗳️'}]},
+      {g:'Welfare & Support', items:[{n:'MADAD Portal',i:'🤝'},{n:'Community Welfare Fund',i:'💚'},{n:'Weekly Open House',i:'📅'}]},
+      {g:'Advisories', items:[{n:'Fraud Advisory',i:'🚨'}]}
+    ]
+  },
+
+  // PHILIPPINES — OFW-focused
+  PH: {
+    consular: [
+      {g:'Travel & Entry', items:[{n:'Visa Services',i:'🛂'},{n:'Travel Advisories',i:'🗺️'}]},
+      {g:'Passport', items:[{n:'Passport Renewal',i:'📘'},{n:'Lost or Damaged Passport',i:'🚫'},{n:'Passport Details Change',i:'✏️'},{n:'Newborn Passport',i:'👶'},{n:'Emergency Certificate',i:'🚨'}]},
+      {g:'Citizenship', items:[{n:'Citizenship and Naturalization',i:'🏛️'},{n:'Dual Citizenship (RA 9225)',i:'🌐'}]}
+    ],
+    certs: [
+      {g:'Attestation', items:[{n:'Attestation Services',i:'📎'},{n:'Police Clearance Certificate',i:'👮'}]},
+      {g:'Certificates', items:[{n:'Birth Certificate',i:'👶'},{n:'Marriage Certificate',i:'💍'},{n:'Death Certificate and Repatriation',i:'🕊️'},{n:'Non-Nationality Certificate',i:'🌐'}]},
+      {g:'Other', items:[{n:'International Driving Permit',i:'🚗'},{n:'Postal Applications',i:'📬'}]}
+    ],
+    community: [
+      {g:'OFW Services', items:[{n:'OFW Registration',i:'📋'},{n:'OWWA Membership',i:'🌟'},{n:'POEA Services',i:'💼'}]},
+      {g:'Welfare & Support', items:[{n:'POLO-OWWA Assistance',i:'🤝'},{n:'Community Welfare Fund',i:'💚'},{n:'Legal Assistance',i:'⚖️'}]},
+      {g:'Advisories', items:[{n:'Fraud Advisory',i:'🚨'}]}
+    ]
+  },
+
+  // PAKISTAN
+  PK: {
+    consular: [
+      {g:'Travel & Entry', items:[{n:'Visa Services',i:'🛂'},{n:'Travel Advisories',i:'🗺️'}]},
+      {g:'Passport', items:[{n:'Passport Renewal',i:'📘'},{n:'Lost or Damaged Passport',i:'🚫'},{n:'Passport Details Change',i:'✏️'},{n:'Newborn Passport',i:'👶'},{n:'Emergency Certificate',i:'🚨'}]},
+      {g:'NICOP & ID', items:[{n:'NICOP (Overseas ID)',i:'🪪'},{n:'POC (Pakistan Origin Card)',i:'📋'},{n:'Citizenship and Naturalization',i:'🏛️'}]}
+    ],
+    certs: [
+      {g:'Attestation', items:[{n:'Attestation Services',i:'📎'},{n:'Police Clearance Certificate',i:'👮'}]},
+      {g:'Certificates', items:[{n:'Birth Certificate',i:'👶'},{n:'Marriage Certificate',i:'💍'},{n:'Death Certificate and Repatriation',i:'🕊️'},{n:'Divorce Certificate',i:'📄'}]},
+      {g:'Other', items:[{n:'International Driving Permit',i:'🚗'},{n:'Postal Applications',i:'📬'}]}
+    ],
+    community: [
+      {g:'Registration', items:[{n:'Overseas Pakistani Registration',i:'📋'},{n:'Student Registration',i:'🎓'},{n:'Overseas Voter Registration',i:'🗳️'}]},
+      {g:'Welfare & Support', items:[{n:'Community Welfare Fund',i:'💚'},{n:'Legal Assistance',i:'⚖️'}]},
+      {g:'Advisories', items:[{n:'Fraud Advisory',i:'🚨'}]}
+    ]
+  },
+
+  // BANGLADESH
+  BD: {
+    consular: [
+      {g:'Travel & Entry', items:[{n:'Visa Services',i:'🛂'},{n:'Travel Advisories',i:'🗺️'}]},
+      {g:'Passport', items:[{n:'Passport Renewal',i:'📘'},{n:'Lost or Damaged Passport',i:'🚫'},{n:'Passport Details Change',i:'✏️'},{n:'Newborn Passport',i:'👶'},{n:'Emergency Certificate',i:'🚨'}]},
+      {g:'Citizenship', items:[{n:'Citizenship and Naturalization',i:'🏛️'},{n:'Surrender Certificate',i:'📄'}]}
+    ],
+    certs: [
+      {g:'Attestation', items:[{n:'Attestation Services',i:'📎'},{n:'Police Clearance Certificate',i:'👮'}]},
+      {g:'Certificates', items:[{n:'Birth Certificate',i:'👶'},{n:'Marriage Certificate',i:'💍'},{n:'Death Certificate and Repatriation',i:'🕊️'},{n:'Non-Nationality Certificate',i:'🌐'}]},
+      {g:'Other', items:[{n:'International Driving Permit',i:'🚗'},{n:'Postal Applications',i:'📬'}]}
+    ],
+    community: [
+      {g:'Registration', items:[{n:'NRI Registration',i:'📋'},{n:'Student Registration',i:'🎓'},{n:'Overseas Voter Registration',i:'🗳️'}]},
+      {g:'Welfare & Support', items:[{n:'BOESL Services',i:'💼'},{n:'BMET Registration',i:'📋'},{n:'Community Welfare Fund',i:'💚'}]},
+      {g:'Finance & Investment',items:[{n:'Wage Earners Bond',i:'🏦'},{n:'NRB Banking',i:'🏦'}]},
+      {g:'Advisories', items:[{n:'Fraud Advisory',i:'🚨'}]}
+    ]
+  },
+
+  // Generic — for LK, NP, NG, GH, KE, EG and any unlisted nationality
+  LK: {
+    consular:[{g:'Travel & Entry',items:[{n:'Visa Services',i:'🛂'},{n:'Travel Advisories',i:'🗺️'}]},{g:'Passport',items:[{n:'Passport Renewal',i:'📘'},{n:'Lost or Damaged Passport',i:'🚫'},{n:'Emergency Certificate',i:'🚨'},{n:'Newborn Passport',i:'👶'}]},{g:'Citizenship',items:[{n:'Citizenship and Naturalization',i:'🏛️'},{n:'Surrender Certificate',i:'📄'}]}],
+    certs:[{g:'Attestation',items:[{n:'Attestation Services',i:'📎'},{n:'Police Clearance Certificate',i:'👮'}]},{g:'Certificates',items:[{n:'Birth Certificate',i:'👶'},{n:'Marriage Certificate',i:'💍'},{n:'Death Certificate and Repatriation',i:'🕊️'}]},{g:'Other',items:[{n:'International Driving Permit',i:'🚗'},{n:'Processing Time Estimator',i:'⏱️'},{n:'Document Checklist Builder',i:'📋'}]}],
+    community:[{g:'Registration',items:[{n:'SLBFE Registration',i:'📋'},{n:'Student Registration',i:'🎓'}]},{g:'Welfare & Finance',items:[{n:'NRFC Account',i:'🏦'},{n:'Repatriation Insurance',i:'🛡️'},{n:'Community Welfare Fund',i:'💚'}]},{g:'Advisories',items:[{n:'Fraud Advisory',i:'🚨'}]}]
+  },
+  NP: {
+    consular:[{g:'Travel & Entry',items:[{n:'Visa Services',i:'🛂'},{n:'Travel Advisories',i:'🗺️'}]},{g:'Passport',items:[{n:'Passport Renewal',i:'📘'},{n:'Lost or Damaged Passport',i:'🚫'},{n:'Emergency Certificate',i:'🚨'},{n:'Newborn Passport',i:'👶'}]},{g:'Citizenship',items:[{n:'Citizenship and Naturalization',i:'🏛️'}]}],
+    certs:[{g:'Attestation',items:[{n:'Attestation Services',i:'📎'},{n:'Police Clearance Certificate',i:'👮'}]},{g:'Certificates',items:[{n:'Birth Certificate',i:'👶'},{n:'Marriage Certificate',i:'💍'},{n:'Death Certificate and Repatriation',i:'🕊️'}]},{g:'Other',items:[{n:'International Driving Permit',i:'🚗'},{n:'Processing Time Estimator',i:'⏱️'},{n:'Document Checklist Builder',i:'📋'}]}],
+    community:[{g:'Registration',items:[{n:'DoFE Registration',i:'📋'},{n:'Student Registration',i:'🎓'}]},{g:'Welfare & Finance',items:[{n:'NRN Account',i:'🏦'},{n:'Pre-Departure Orientation',i:'📚'},{n:'Community Welfare Fund',i:'💚'}]},{g:'Advisories',items:[{n:'Fraud Advisory',i:'🚨'}]}]
+  },
+  NG: {
+    consular:[{g:'Travel & Entry',items:[{n:'Visa Services',i:'🛂'},{n:'Travel Advisories',i:'🗺️'}]},{g:'Passport',items:[{n:'Passport Renewal',i:'📘'},{n:'Lost or Damaged Passport',i:'🚫'},{n:'Emergency Certificate',i:'🚨'},{n:'Newborn Passport',i:'👶'}]},{g:'Citizenship',items:[{n:'Citizenship and Naturalization',i:'🏛️'},{n:'Surrender Certificate',i:'📄'}]}],
+    certs:[{g:'Attestation',items:[{n:'Attestation Services',i:'📎'},{n:'Police Clearance Certificate',i:'👮'}]},{g:'Certificates',items:[{n:'Birth Certificate',i:'👶'},{n:'Marriage Certificate',i:'💍'},{n:'Death Certificate and Repatriation',i:'🕊️'}]},{g:'Other',items:[{n:'International Driving Permit',i:'🚗'},{n:'Processing Time Estimator',i:'⏱️'},{n:'Document Checklist Builder',i:'📋'}]}],
+    community:[{g:'Registration',items:[{n:'NIDCOM Registration',i:'📋'},{n:'Student Registration',i:'🎓'}]},{g:'Diaspora Programs',items:[{n:'Diaspora Bond Program',i:'🏦'},{n:'NDE Skills Fund',i:'💼'},{n:'Community Welfare Fund',i:'💚'}]},{g:'Advisories',items:[{n:'Fraud Advisory',i:'🚨'}]}]
+  },
+  DEFAULT: {
+    consular: [
+      {g:'Travel & Entry', items:[{n:'Visa Services',i:'🛂'},{n:'Travel Advisories',i:'🗺️'}]},
+      {g:'Passport', items:[{n:'Passport Renewal',i:'📘'},{n:'Lost or Damaged Passport',i:'🚫'},{n:'Passport Details Change',i:'✏️'},{n:'Newborn Passport',i:'👶'},{n:'Emergency Certificate',i:'🚨'}]},
+      {g:'Citizenship', items:[{n:'Citizenship and Naturalization',i:'🏛️'},{n:'Surrender Certificate',i:'📄'}]}
+    ],
+    certs: [
+      {g:'Attestation', items:[{n:'Attestation Services',i:'📎'},{n:'Police Clearance Certificate',i:'👮'}]},
+      {g:'Certificates', items:[{n:'Birth Certificate',i:'👶'},{n:'Marriage Certificate',i:'💍'},{n:'Death Certificate and Repatriation',i:'🕊️'},{n:'Non-Nationality Certificate',i:'🌐'}]},
+      {g:'Other', items:[{n:'International Driving Permit',i:'🚗'},{n:'Postal Applications',i:'📬'}]}
+    ],
+    community: [
+      {g:'Registration', items:[{n:'NRI Registration',i:'📋'},{n:'Student Registration',i:'🎓'},{n:'Overseas Voter Registration',i:'🗳️'}]},
+      {g:'Welfare & Support', items:[{n:'Community Welfare Fund',i:'💚'},{n:'Legal Assistance',i:'⚖️'}]},
+      {g:'Advisories', items:[{n:'Fraud Advisory',i:'🚨'}]}
+    ]
+  }
+};
+
+function renderSidebar() {
+  var config = SIDEBAR[NAT] || SIDEBAR.DEFAULT;
+  var tabs = ['consular','certs','community'];
+  var tabLabels = ['Consular','Certificates','Community'];
+  var tabBar = document.querySelector('.sb-tabs');
+  if (tabBar) {
+    tabBar.innerHTML = tabs.map(function(t,i){
+      return '<div class="sb-tab'+(i===0?' active':'')+'" onclick="switchTab(\''+t+'\')">'+tabLabels[i]+'</div>';
+    }).join('')+'<div class="sb-tab" onclick="switchTab(\'links\')">Links</div>';
+  }
+  var panels = document.querySelector('.sb-panels');
+  if (!panels) return;
+  var html = tabs.map(function(tabKey, ti) {
+    var groups = config[tabKey] || [];
+    var inner = groups.map(function(g) {
+      var items = g.items.map(function(item) {
+        return '<div class="svc-item" onclick="svc(this,\''+item.n+'\',\''+item.i+'\')">'
+          +'<div class="svc-ico">'+item.i+'</div>'+item.n+'</div>';
+      }).join('');
+      return '<div class="svc-group">'+g.g+'</div><div class="svc-list">'+items+'</div>';
+    }).join('');
+    return '<div class="sb-panel'+(ti===0?' active':'')+'" id="tab-'+tabKey+'">'+inner+'</div>';
+  }).join('');
+  html += '<div class="sb-panel" id="tab-links"><div id="quickLinksBox" style="padding:6px 4px;"></div></div>';
+  panels.innerHTML = html;
+  var firstItem = panels.querySelector('.svc-item');
+  if (firstItem) { firstItem.classList.add('active'); SVC = firstItem.textContent.trim(); }
+  updateQuickLinks();
+}
+function startApp(){
+  var nat=C[NAT],res=C[RES];if(!nat||!res)return;
+  // Update sidebar profile card
+  safeSet('sbF1',nat.flag); safeSet('sbF2',res.flag);
+  var con=(RES==='DE'&&STATE&&['IN','PK','BD','NG','EG'].indexOf(NAT)!==-1)?getConsulate(STATE):null;
+  safeSet('sbCon',con?'🏛️ '+(con.name.replace('Embassy of India, ','').replace('Consulate General of India, ','CGI ')):'');
+  // Render sidebar for this nationality
+  renderSidebar();
+  // Update header
+  updateHeader();
+  // Update key info and quick links
+  updateKeyInfo();
+  updateQuickLinks();
+  // Transition
+  $('onboarding').classList.add('exit');
+  $('app').classList.add('visible');
+  setTimeout(function(){sendWelcome();},300);
+  setTimeout(function(){updateFollowupBank();renderTrackerSidebar();},400);
+}
+function goBack(){
+  $('onboarding').classList.remove('exit');
+  $('app').classList.remove('visible');
+  var cm=$('chatMsgs');if(cm)cm.innerHTML='';
+}
+
+// ── HEADER ────────────────────────────────────────────────────
+function updateHeader(){
+  // Header shows ConsulAI logo, Emergency and SOS only — no profile text
+}
+
+// ── KEY INFO ──────────────────────────────────────────────────
+function updateKeyInfo(){
+  var nat=C[NAT],res=C[RES];if(!nat||!res)return;
+  var ctx=getCtx(NAT,RES);
+  var box=$('keyInfoBox');if(!box)return;
+  // If IN-DE with state selected, show consulate-specific info
+  if(NAT==='IN'&&RES==='DE'&&STATE){
+    var con=getConsulate(STATE);
+    if(con){
+      box.innerHTML=
+        '<div class="ctx-row"><span class="ctx-k">Consulate</span><span class="ctx-v">'+con.name.replace('Embassy of India, ','').replace('Consulate General of India, ','CGI ')+'</span></div>'+
+        '<div class="ctx-row"><span class="ctx-k">Phone</span><span class="ctx-v">'+con.phone+'</span></div>'+
+        '<div class="ctx-row"><span class="ctx-k">Hours</span><span class="ctx-v">'+con.hours+'</span></div>'+
+        '<div class="ctx-row"><span class="ctx-k">Appointment</span><span class="ctx-v"><a href="'+con.url+'" target="_blank" style="color:var(--saffron);text-decoration:none">Book ↗</a></span></div>'+
+        '<div class="ctx-row"><span class="ctx-k">Renewal</span><span class="ctx-v">6-8 weeks</span></div>';
+      return;
+    }
+  }
+  if(ctx){
+    var rows=[
+      ['Your Embassy',ctx.office],
+      ['Passport Renewal',ctx.renewal],
+      ['Emergency Cert',ctx.ec]
+    ];
+    if(NAT==='IN') if(NAT==='IN') rows.push(['OCI',ctx.oci]);
+    box.innerHTML=rows.map(function(r){
+      return'<div class="ctx-row"><span class="ctx-k">'+r[0]+'</span><span class="ctx-v">'+r[1]+'</span></div>';
+    }).join('');
+  } else {
+    box.innerHTML='<div style="font-size:11px;color:var(--ash-muted)">Select nationality & residence to see consular info.</div>';
+  }
+}
+
+// ── QUICK LINKS ───────────────────────────────────────────────
+function updateQuickLinks(){
+  var ctx=getCtx(NAT,RES);
+  var box=$('quickLinksBox');
+  if(!box) return;
+  box.innerHTML='';
+  if(!ctx||!ctx.links||!ctx.links.length) return;
+
+  // Get selected consulate (if Germany + multi-consulate nationality)
+  var con=(RES==='DE'&&STATE&&['IN','PK','BD','NG','EG'].indexOf(NAT)!==-1)?getConsulate(STATE):null;
+
+  ctx.links.forEach(function(l){
+    var url=l.u;
+    var label=l.l;
+    var note=l.n;
+
+    // If this is a booking/appointment link and we have a specific consulate selected,
+    // replace URL and label with the correct consulate's appointment URL
+    if(con&&(l.l.indexOf('Appointment')!==-1||l.l.indexOf('Book')!==-1||l.l.indexOf('Embassy')!==-1)){
+      url=con.url;
+      label='Book Appointment';
+      note=con.name.split(',')[0];
+    }
+
+    var btn=document.createElement('a');
+    btn.href=url; btn.target='_blank'; btn.rel='noopener noreferrer';
+    btn.className='ql-btn';
+    btn.innerHTML='<span class="ql-icon">'+l.i+'</span>'+
+      '<div class="ql-text"><div class="ql-label">'+label+'</div><div class="ql-note">'+note+'</div></div>'+
+      '<span class="ql-arrow">&#8599;</span>';
+    box.appendChild(btn);
+  });
+}
+function switchTab(name){
+  document.querySelectorAll('.sb-tab').forEach(function(t,i){
+    t.classList.toggle('active',['consular','certs','community','links'][i]===name);
+  });
+  document.querySelectorAll('.sb-panel').forEach(function(p){
+    p.classList.toggle('active',p.id==='tab-'+name);
+  });
+}
+
+// ── SERVICES ─────────────────────────────────────────────────
+function svc(el, name, icon){
+  document.querySelectorAll('.svc-item').forEach(function(s){s.classList.remove('active');});
+  el.classList.add('active'); SVC=name;
+  updateFollowupBank();
+  if(name==='Processing Time Estimator'){showTimeEstimator();return;}
+  if(name==='Document Checklist Builder'){showChecklistBuilder();return;}
+  var nat=C[NAT],res=C[RES],ctx=getCtx(NAT,RES);
+  var con=(RES==='DE'&&STATE&&['IN','PK','BD','NG','EG'].indexOf(NAT)!==-1)?getConsulate(STATE):null;
+  var office=con?con.name:(ctx?ctx.office:'Your nearest '+nat.dem+' embassy in '+res.name);
+  var portal=ctx?ctx.portal:nat.mfa;
+  var apptUrl=con?(con.url||portal):portal;
+  renderServiceCard(name,nat,res,ctx,office,portal,apptUrl,con);
+}
+
+function renderServiceCard(name,nat,res,ctx,office,portal,apptUrl,con){
+  var r=res.name,n=nat.dem,f=nat.flag;
+  function link(label,url,icon){return'<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="appt-btn" style="margin:8px 0 4px;display:inline-flex;font-size:11px;padding:6px 12px">'+(icon||'↗')+' '+label+'</a>';}
+  function irow(k,v){return'<div class="info-cell"><div class="ic-label">'+k+'</div><div class="ic-val">'+v+'</div></div>';}
+  function step(n,h,b){return'<div class="step"><span class="step-num">'+n+'</span><div class="step-body"><strong>'+h+'</strong><br>'+b+'</div></div>';}
+  function doc(d){return'<li>'+d+'</li>';}
+
+  // Special renderers for Visa and Passport
+  if(name==='Visa Services'){
+    var visaKey=NAT+'->'+RES; var status=VISA[NAT+'-'+RES]||'required';
+    var sm={not_required:{c:'var(--green)',i:'✅',t:'No Visa Required',cls:'ok'},on_arrival:{c:'var(--saffron)',i:'🟡',t:'Visa on Arrival',cls:'warn'},evisa:{c:'var(--blue)',i:'💻',t:'e-Visa Available',cls:'info'},required:{c:'var(--red)',i:'🔴',t:'Visa Required',cls:'emer'}};
+    var s=sm[status]||sm.required;
+    var details={not_required:n+' passport holders do <strong>not need a visa</strong> to enter '+r+'.',on_arrival:n+' passport holders can obtain a <strong>Visa on Arrival</strong> at '+r+' airports.',evisa:n+' passport holders can apply for an <strong>e-Visa online</strong> before traveling to '+r+'.',required:n+' passport holders <strong>require a visa</strong> to enter '+r+'. Apply at the embassy before travel.'};
+    var html='<strong>Visa Requirements</strong> for '+f+' '+n+' passport in '+res.flag+' '+r+'<div class="info-grid" style="margin-top:10px">'+irow('Passport',f+' '+nat.name)+irow('Destination',res.flag+' '+r)+'</div><div class="alert '+s.cls+'" style="margin-top:8px;align-items:center"><span style="font-size:16px">'+s.i+'</span><div><strong style="color:'+s.c+'">'+s.t+'</strong><br><span style="font-size:11px">'+details[status]+'</span></div></div>';
+    addAgent(html,['Apply for '+r+' visa','Required documents list','Visa processing time','Book appointment'],null);
+    return;
+  }
+
+  if(name==='Passport Renewal'){
+    if(['IN','PK','BD','NG','EG'].indexOf(NAT)!==-1&&RES==='DE'){
+      if(!STATE){
+        addAgent('<strong>Passport Renewal</strong> — Select your German state to see your specific consulate:<select class="ob-state-select" style="margin-top:10px;display:block;width:100%" onchange="inlineState(this.value)"><option value="">-- Select state --</option><optgroup label="Berlin Office"><option>Berlin</option><option>Brandenburg</option><option>Mecklenburg-Vorpommern</option><option>Sachsen</option><option>Sachsen-Anhalt</option><option>Thüringen</option></optgroup><optgroup label="Frankfurt Office"><option>Hessen</option><option>Nordrhein-Westfalen</option><option>Rheinland-Pfalz</option><option>Saarland</option></optgroup><optgroup label="Hamburg Office"><option>Hamburg</option><option>Bremen</option><option>Schleswig-Holstein</option><option>Niedersachsen</option></optgroup><optgroup label="Munich Office"><option>Bayern</option><option>Baden-Württemberg</option></optgroup></select>',[],null);
+        return;
+      }
+      var c=con||getConsulate(STATE);
+      if(c){
+        var html='<strong>Passport Renewal</strong> — '+n+' nationals in <strong>'+STATE+'</strong>'+
+          '<div style="margin-top:10px">'+buildConsulateCard(c)+'</div>'+
+          (ctx&&ctx.oci?'<div class="alert warn" style="margin-top:8px">⚠️ '+ctx.oci+'</div>':'');
+        addAgent(html,[],['Renew passport at this office','Tatkal urgent renewal','Emergency certificate',(NAT==='IN'?'OCI card application':'Overseas identity card')]);
+        return;
+      }
+    }
+    var html='<strong>Passport Renewal</strong> for '+f+' '+n+' in <strong>'+r+'</strong><div class="info-grid" style="margin-top:10px">'+irow('Processing Office',office)+irow('Renewal Time',ctx?ctx.renewal:'6-10 weeks')+irow('Portal','<a href="'+portal+'" target="_blank" style="color:var(--blue)">'+portal.replace('https://','')+'</a>')+irow('Emergency Cert',ctx?ctx.ec:'24-72 hrs')+'</div>'+(ctx&&ctx.oci&&NAT==='IN'?'<div class="alert warn" style="margin-top:8px">⚠️ '+ctx.oci+'</div>':'')+link('Apply for Passport',portal,'📘')+link('Book Appointment',apptUrl,'📅');
+    addAgent(html,['Documents needed for renewal','How to book appointment','Tatkal urgent renewal','Lost passport procedure'],null);
+    return;
+  }
+
+  // Generic rich card for all other services
+  var cards = {
+    'Travel Advisories':'<strong>Travel Advisories</strong> for '+f+' '+n+' in '+res.flag+' '+r+'<div class="info-grid" style="margin-top:10px">'+irow('Passport Validity','Min 6 months required for most countries')+irow('High-Risk Zones','Check MFA advisories before travel')+irow('Travel Insurance','Strongly recommended')+irow('Registration','Register with your embassy before travel')+'</div><div class="alert warn" style="margin-top:8px">⚠️ Always register with '+office+' before travelling to high-risk destinations.</div>'+link('MFA Travel Advisories',nat.mfa,'🌍')+link('Register with Embassy',portal,'🤝'),
+    'Lost or Damaged Passport':'<strong>Lost / Damaged Passport</strong> — '+n+' in '+r+'<div class="alert emer" style="margin-top:8px">🚨 Act immediately — file a police report first.</div><div class="steps" style="margin-top:10px">'+step(1,'File Police Report','Go to nearest Polizei. Get a <strong>written Anzeige</strong> — mandatory for replacement.')+step(2,'Contact Embassy','Call <strong>'+office+'</strong> with police report and 2 passport photos.')+step(3,'Emergency Certificate','An <strong>EC</strong> is issued in 24-48 hrs for one-way travel home only.')+step(4,'Apply for Fresh Passport','Apply via '+portal+' and book a consulate appointment.')+'</div><ul class="ck-list">'+doc('Police report (original)')+doc('2 ICAO-compliant passport photos')+doc('Proof of address in '+r)+doc('Copy of old passport if available')+'</ul>'+link('Apply for Passport',portal,'📘')+link('Book Appointment',apptUrl,'📅'),
+    'Passport Details Change':'<strong>Passport Details Change / Re-issue</strong><div class="info-grid" style="margin-top:10px">'+irow('Office',office)+irow('Time',ctx?ctx.renewal:'6-8 weeks')+irow('Portal',portal.replace('https://',''))+'</div><div class="alert info" style="margin-top:8px">ℹ️ Machine-readable passports do not allow manual name changes — you must apply for a new passport.</div><ul class="ck-list">'+doc('Current original passport')+doc('Proof of change (marriage cert / gazette / court order)')+doc('2 ICAO-compliant passport photos')+doc('Proof of address in '+r)+'</ul>'+link('Apply Online',portal,'📘')+link('Book Appointment',apptUrl,'📅'),
+    'Newborn Passport':'<strong>Newborn Passport & Birth Registration</strong><div class="alert info" style="margin-top:8px">ℹ️ Register your child at the embassy <strong>within 1 year</strong> of birth before applying for a passport.</div><div class="steps" style="margin-top:10px">'+step(1,'Register the Birth','Submit birth registration at '+office+'. Both parents must be present.')+step(2,'Apply for Passport','After birth registration, apply via '+portal+'.')+step(3,'Book Appointment','Both parents must attend with originals.')+'</div><ul class="ck-list">'+doc('Birth certificate from '+r+' (apostilled if required)')+doc('Both parents passports (original and copies)')+doc('Both parents '+r+' visas or residence permits')+doc('Marriage certificate of parents')+doc('2 ICAO photos of the child')+'</ul>'+link('Book Appointment',apptUrl,'📅'),
+    'Emergency Certificate':'<strong>Emergency Certificate (EC)</strong><div class="info-grid" style="margin-top:10px">'+irow('Issued By',office)+irow('Processing','24-48 hrs')+irow('Valid For','One-way travel home only')+irow('Cannot Use For','Any other country')+'</div><div class="alert warn" style="margin-top:8px">⚠️ An EC is NOT a passport. Valid for one-way travel to your home country only.</div><div class="steps" style="margin-top:10px">'+step(1,'Report Lost Passport','File police report if passport lost or stolen.')+step(2,'Visit Embassy in Person','Walk-in or call '+office+' — EC cannot be submitted by post.')+step(3,'Collect EC','Usually ready in 24-48 hours.')+'</div><ul class="ck-list">'+doc('Police report (if passport lost)')+doc('2 ICAO-compliant passport photos')+doc('Any proof of identity')+doc('Proof of residence in '+r)+doc('Onward travel evidence (flight booking)')+'</ul>',
+    'OCI Fresh Application':'<strong>OCI Card — Fresh Application</strong><div class="info-grid" style="margin-top:10px">'+irow('Eligibility','Person of '+nat.name+' origin who is now a foreign citizen')+irow('Processing','8-12 weeks')+irow('Valid','Lifelong (minor renewed at 20)')+irow('Fee','~€75 adult / ~€40 minor')+'</div><div class="alert ok" style="margin-top:8px">✅ OCI gives visa-free lifelong access to India. You can work, study, and own property in India.</div><div class="steps" style="margin-top:10px">'+step(1,'Apply Online','Fill OCI application at <strong>ociservices.gov.in</strong>. Print Part A and B.')+step(2,'Upload Documents','Upload scans before submitting physical copies.')+step(3,'Submit','Submit at VFS Global or '+office+'.')+step(4,'Track Status','Use OCI portal. Card mailed to your address.')+'</div><ul class="ck-list">'+doc('Current foreign passport (original + copy)')+doc('Surrender Certificate (if held home country passport before)')+doc('Proof of '+nat.name+' origin (old passport or parent passport)')+doc('Proof of '+r+' address')+doc('2 ICAO passport photos')+'</ul>'+link('OCI Application Portal','https://ociservices.gov.in','🎫'),
+    'OCI Spouse Application':'<strong>OCI Card — Spouse of Home Country National</strong><div class="info-grid" style="margin-top:10px">'+irow('Eligibility','Foreign national married to a home country citizen or OCI holder')+irow('Card Validity','5 years only')+irow('Physical Presence','Both spouses must appear in person')+irow('Processing','8-12 weeks')+'</div><div class="alert warn">⚠️ OCI Spouse card is valid for <strong>5 years only</strong> — renewal required after 5 years.</div><ul class="ck-list">'+doc('Foreign spouse passport')+doc('Home country spouse passport or OCI card')+doc('Marriage certificate (apostilled if issued abroad)')+doc('Proof of '+r+' address')+doc('2 ICAO photos of applicant')+'</ul>'+link('OCI Application Portal','https://ociservices.gov.in','🎫'),
+    'OCI Renewal or Loss':'<strong>OCI Renewal / Re-issue After Loss</strong><div class="info-grid" style="margin-top:10px">'+irow('Renew When','New passport after age 20; details change')+irow('Processing','6-10 weeks')+irow('Fee','~€30-50')+irow('Lost OCI','Report + apply for re-issue')+'</div><div class="alert info">ℹ️ Update OCI whenever you get a new passport after age 20, and again after age 50.</div><ul class="ck-list">'+doc('Current passport and old OCI card (or police report if lost)')+doc('2 ICAO passport photos')+doc('Proof of address in '+r)+'</ul>'+link('OCI Services Portal','https://ociservices.gov.in','🎫'),
+    'PIO to OCI Conversion':'<strong>PIO Card to OCI Conversion</strong><div class="alert ok" style="margin-top:8px">✅ PIO cards were discontinued in 2015. Conversion to OCI is free of charge.</div><div class="info-grid" style="margin-top:10px">'+irow('Cost','Free of charge')+irow('Time','6-8 weeks')+irow('Submit To','VFS Global or '+office)+'</div><ul class="ck-list">'+doc('Original PIO card')+doc('Current foreign passport')+doc('Proof of address in '+r)+doc('2 ICAO passport photos')+'</ul>'+link('OCI Services Portal','https://ociservices.gov.in','🎫'),
+    'Citizenship and Naturalization':'<strong>Citizenship & Naturalization</strong> — '+n+' in '+r+'<div class="alert warn" style="margin-top:8px">⚠️ '+nat.name+' does NOT permit dual citizenship. Acquiring '+r+' nationality requires immediate surrender of your home country passport.</div><div class="steps" style="margin-top:10px">'+step(1,'Take '+r+' Citizenship Oath','Complete naturalization as per '+r+' law.')+step(2,'Surrender Your Passport','Apply for a Surrender Certificate at '+office+' immediately.')+step(3,'Apply for Overseas Identity Document','Once Surrender Certificate is issued, apply for your overseas identity card via '+portal+'.')+'</div>',
+    'Surrender Certificate':'<strong>Surrender Certificate</strong> — Required when surrendering your home country citizenship<div class="info-grid" style="margin-top:10px">'+irow('Required When','After acquiring foreign citizenship')+irow('Processing','4-6 weeks')+irow('Submit To',office)+irow('Fee','~€25-50')+'</div><div class="alert info">ℹ️ The Surrender Certificate is mandatory before applying for an overseas identity card.</div><ul class="ck-list">'+doc('Original home country passport to be surrendered')+doc('New foreign passport (original + copy)')+doc(r+' naturalization certificate')+doc('Proof of address in '+r)+'</ul>'+link('Book Appointment',apptUrl,'📅'),
+    'Attestation Services':'<strong>Document Attestation</strong> — '+n+' in '+r+'<div class="info-grid" style="margin-top:10px">'+irow('Processed By',office)+irow('Time','1-5 working days')+irow('Submission','In-person or by post')+irow('Payment','Cash at counter')+'</div><div class="section-label">Documents Eligible for Attestation</div><ul class="ck-list">'+doc('Educational certificates (degrees, marksheets)')+doc('Birth, marriage, death certificates')+doc('Power of Attorney documents')+doc('Affidavits and declarations')+'</ul><div class="steps" style="margin-top:10px">'+step(1,'Notarise in '+r,'Get documents notarised locally first.')+step(2,'Submit at Embassy','Visit '+office+' with originals and photocopies.')+step(3,'Pay Fee','Fee varies per document type.')+step(4,'Collect','Ready in 1-5 working days.')+'</div>'+link('Book Appointment',apptUrl,'📅'),
+    'Police Clearance Certificate':'<strong>Police Clearance Certificate (PCC)</strong> — '+n+' in '+r+'<div class="info-grid" style="margin-top:10px">'+irow('Issued By',office+' (verified with home country authorities)')+irow('Processing','2-4 weeks')+irow('Common Use','Immigration, work visa, PR')+irow('Based On','Your last home country address')+'</div><div class="alert info" style="margin-top:8px">ℹ️ PCC is based on police verification at your <strong>last registered home address</strong>.</div><div class="steps" style="margin-top:10px">'+step(1,'Apply via e-SEWA or In Person','Submit at '+office+' or via e-SEWA portal.')+step(2,'Home Country Verification','Request verified with home country authorities.')+step(3,'Collect','Ready in 2-4 weeks.')+'</div><ul class="ck-list">'+doc('Valid passport (copy of first and last pages)')+doc('Proof of '+r+' address')+doc('Proof of home country address')+'</ul>'+link('e-SEWA Portal','https://indianconsularservices.mea.gov.in','💻'),
+    'Birth Certificate':'<strong>Birth Certificate</strong><div class="info-grid" style="margin-top:10px">'+irow('Issued By',office)+irow('Based On','Passport entries or home country records')+irow('Processing','2-3 weeks')+irow('Use','Proof of DOB for home country purposes')+'</div><div class="alert info">ℹ️ The embassy can issue a <strong>birth details certificate</strong> based on your passport entries.</div><ul class="ck-list">'+doc('Original passport')+doc('Application form (available at embassy)')+doc('Applicable fee')+'</ul>'+link('e-SEWA Portal','https://indianconsularservices.mea.gov.in','💻'),
+    'Name Change Certificate':'<strong>Name Change Certificate</strong><div class="info-grid" style="margin-top:10px">'+irow('Issued By',office)+irow('Processing','2-4 weeks')+irow('Required For','Passport re-issue, legal records')+'</div><ul class="ck-list">'+doc('Original passport')+doc('Gazette notification OR marriage certificate')+doc('Affidavit declaring the name change')+doc('2 ICAO passport photos')+'</ul>'+link('Book Appointment',apptUrl,'📅'),
+    'NOC for Newborn Naming':'<strong>NOC for Naming of Newborn Child</strong><div class="info-grid" style="margin-top:10px">'+irow('Purpose','Confirms child name for official records')+irow('Issued By',office)+irow('Processing','1-2 weeks')+'</div><ul class="ck-list">'+doc('Birth certificate of the child from '+r)+doc('Both parents passports')+doc('Declaration of child name (affidavit)')+doc('Proof of parents address in '+r)+'</ul>',
+    'Non-Nationality Certificate':'<strong>Non-Nationality Certificate</strong><div class="info-grid" style="margin-top:10px">'+irow('Purpose','Certifies person is NOT a national')+irow('Issued By',office)+irow('Processing','2-3 weeks')+'</div><div class="alert info">ℹ️ Required when a person of home country origin has acquired foreign citizenship and must prove they are no longer a home country national.</div><ul class="ck-list">'+doc('Foreign passport showing current nationality')+doc('Surrender Certificate of home country passport')+doc('Application form and fee')+'</ul>',
+    'NRI Certificate':'<strong>Overseas Residency Certificate</strong> — Proof of overseas status<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Proves non-resident status for home country banking, property, and tax')+irow('Issued By',office)+irow('Processing','1-2 weeks')+irow('Validity','Usually 1 year')+'</div><div class="alert info">ℹ️ Required by home country banks for property or tax purposes, for property transactions, and tax exemptions.</div><ul class="ck-list">'+doc('Valid '+nat.name+' passport')+doc('Proof of '+r+' address')+doc('Valid '+r+' residence permit or visa')+'</ul>',
+    'Death Certificate and Repatriation':'<strong>Death Certificate & Repatriation</strong><div class="alert emer" style="margin-top:8px">🚨 In case of death of a national abroad, contact <strong>'+office+'</strong> immediately.</div><div class="steps" style="margin-top:10px">'+step(1,'Obtain Local Death Certificate','Get official death certificate from '+r+' authorities.')+step(2,'Contact Embassy','Call '+office+' immediately for repatriation guidance.')+step(3,'Get Embalming Clearance','Embassy assists with coffin sealing and health authority clearances.')+step(4,'Register on eCARe','Register case on eCARe portal for official tracking.')+step(5,'Transport Home','Embassy issues NOC for transportation.')+'</div><ul class="ck-list">'+doc('Death certificate from '+r+' (original)')+doc('Deceased passport')+doc('Deceased visa / residence permit')+doc('Medical cause of death certificate')+'</ul>'+link('eCARe Portal',portal,'🕊️'),
+    'International Driving Permit':'<strong>International Driving Permit (IDP)</strong><div class="info-grid" style="margin-top:10px">'+irow('Valid In','150+ countries')+irow('Validity','1 year from issue')+irow('Issued By',office)+irow('Fee','~€10-20')+'</div><div class="alert info">ℹ️ An IDP must always be carried alongside your original driving licence — it is a translation only.</div><ul class="ck-list">'+doc('Valid driving licence (original + copy)')+doc('Valid passport')+doc('2 ICAO passport photos')+'</ul>',
+    'eCARe Portal':'<strong>Consular Emergency Portal</strong> — Emergency Consular Assistance & Registration<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Register deaths, missing persons, distress cases')+irow('Website',''+portal.replace('https://','')+'')+irow('Available','24/7 online')+irow('Run By','Home Country MFA')+'</div><div class="section-label">Use eCARe For</div><ul class="ck-list">'+doc('Death of '+nat.name+' national abroad')+doc('Repatriation of mortal remains')+doc('Reporting a missing '+nat.name+' national')+doc('Serious distress cases')+'</ul>'+link('Open eCARe Portal',portal,'🕊️'),
+    'Postal Applications':'<strong>Postal Applications</strong> — Submit consular applications by post<div class="info-grid" style="margin-top:10px">'+irow('Available At','Your home country consulates')+irow('Not Available For','EC, first-time passport, foreign spouse OCI')+irow('Extra Time','Add 1-2 weeks')+'</div><div class="alert warn" style="margin-top:8px">⚠️ Always use a <strong>tracked courier</strong> (DHL, FedEx) for original documents.</div><div class="section-label">Available by Post</div><ul class="ck-list">'+doc('Passport renewal (re-issue)')+doc('OCI card applications and renewals')+doc('Police Clearance Certificate')+doc('Document attestation')+'</ul>',
+    'NRI Registration':'<strong>Embassy Registration</strong> — Register with your embassy as a national living in '+r+'<div class="info-grid" style="margin-top:10px">'+irow('Portal','MADAD / Embassy website')+irow('Mandatory','Recommended — not legally required')+irow('Benefits','Emergency alerts, evacuation lists')+irow('Time','10-15 minutes online')+'</div><div class="alert ok" style="margin-top:8px">✅ Registration ensures you are included in <strong>evacuation lists</strong> during emergencies.</div>'+link('Register on MADAD',portal,'🤝'),
+    'Indian Student Registration':'<strong>'+n+' Student Registration</strong> — Students in '+r+'<div class="info-grid" style="margin-top:10px">'+irow('Who',nat.name+' nationals studying in '+r)+irow('Why','Emergency contact, welfare support')+irow('Time','5-10 minutes online')+'</div><div class="alert ok">✅ Registration ensures the embassy can <strong>contact you during emergencies</strong> and connects you to welfare programmes.</div><ul class="ck-list">'+doc(nat.name+' passport')+doc('Student visa or enrollment proof')+doc('University name and city')+doc('Local contact number')+'</ul>',
+    'Overseas Voter Registration':'<strong>Overseas Voter Registration</strong> — Vote in elections from '+r+'<div class="info-grid" style="margin-top:10px">'+irow('Eligible',nat.name+' citizens (not OCI holders)')+irow('Register At','NVSP portal (nvsp.in)')+irow('Voting','In-person at home constituency only')+'</div><div class="alert info" style="margin-top:8px">ℹ️ India does NOT currently allow overseas postal voting — you must travel to India to vote.</div>'+link('NVSP Registration','https://nvsp.in','🗳️'),
+    'MADAD Portal':'<strong>Consular Grievance Portal</strong> — Consular Grievance & Assistance System<div class="info-grid" style="margin-top:10px">'+irow('Run By','Ministry of Foreign Affairs')+irow('Website',''+portal.replace('https://','')+'d.gov.in')+irow('Available','24/7 web and mobile')+'</div><div class="alert ok" style="margin-top:8px">✅ MADAD is your official channel to file complaints, report emergencies, and register as an NRI.</div><div class="section-label">What You Can Do</div><ul class="ck-list">'+doc('File consular complaint or grievance')+doc('Report emergency — distress, missing, death')+doc('Register as home country national abroad')+doc('Track complaint status')+'</ul>'+link('Open MADAD Portal',portal,'🤝'),
+    'Community Welfare Fund':'<strong>Community Welfare Fund</strong> — Emergency financial assistance<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Emergency financial help for distressed nationals')+irow('Managed By','Your home country embassy and consulates')+irow('Eligibility',nat.name+' nationals in genuine distress')+irow('Type','Emergency loans or one-time grants')+'</div><div class="alert info" style="margin-top:8px">ℹ️ Covers stranded workers, exploitation victims, those who need emergency repatriation funding.</div><div class="alert warn">⚠️ Contact the Welfare Officer at '+office+' with full details of your situation.</div>',
+    'Weekly Open House':'<strong>Weekly Open House</strong> — Direct access to Consular Officers<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Walk-in access for complex queries')+irow('Frequency','Usually Wed or Thu — check your consulate')+irow('Appointment','Not required — walk-in')+irow('Your Consulate',office.split(',')[0])+'</div><div class="alert ok" style="margin-top:8px">✅ Ideal for complex cases not resolvable online — pending applications, unusual situations.</div>'+link('Check Consulate Hours',apptUrl,'🕐'),
+
+    'Dual Citizenship (RA 9225)':'<strong>Dual Citizenship (RA 9225)</strong> — Filipino nationals in <strong>'+r+'</strong><div class="info-grid" style="margin-top:10px">'+irow('Law','Republic Act 9225 (Citizenship Retention)')+irow('Who','Former Filipinos who became foreign citizens')+irow('Apply At',office)+irow('Processing','4-8 weeks')+'</div><div class="alert ok" style="margin-top:8px">✅ RA 9225 allows natural-born Filipinos who became foreign citizens to <strong>reacquire Philippine citizenship</strong>.</div><div class="steps" style="margin-top:10px">'+step(1,'File Application','Submit application at the Philippine Embassy with supporting documents.')+step(2,'Take Oath of Allegiance','Appear in person to take the Oath of Allegiance to the Philippines.')+step(3,'Receive Certificate','Identification Certificate (IC) and Order of Approval issued.')+step(4,'Register in Philippines','Register with Philippine Statistics Authority upon return.')+'</div><ul class="ck-list">'+doc('Birth Certificate (PSA-authenticated)')+doc('Foreign passport (copy)')+doc('Evidence of former Filipino citizenship (old Philippine passport or birth cert)')+doc('2 passport photos')+doc('Application form and fee')+'</ul>',
+    'OFW Registration':'<strong>OFW Registration</strong> — Register as Overseas Filipino Worker in <strong>'+r+'</strong><div class="info-grid" style="margin-top:10px">'+irow('Portal','DFA / OWWA portal')+irow('Mandatory','Required before departure from Philippines')+irow('Benefits','Insurance, welfare, emergency repatriation')+irow('Process','Online registration + embassy verification')+'</div><div class="alert ok" style="margin-top:8px">✅ OFW registration provides access to <strong>OWWA benefits</strong> including $10,000 death/disability insurance, medical coverage, and emergency repatriation assistance.</div>'+link('OWWA Portal','https://onlinemembership.owwa.gov.ph','🌟'),
+    'OWWA Membership':'<strong>OWWA Membership</strong> — Overseas Workers Welfare Administration<div class="info-grid" style="margin-top:10px">'+irow('Fee','USD $25 per 2-year membership')+irow('Benefits','Insurance, medical, scholarship, training')+irow('Where','Philippine Embassy or online')+irow('Valid','2 years')+'</div><div class="section-label">Key Benefits</div><ul class="ck-list">'+doc('$10,000 death and disability insurance')+doc('Medical reimbursement up to $1,000')+doc('Livelihood and skills training')+doc('Educational assistance for dependents')+doc('Emergency repatriation assistance')+'</ul>'+link('OWWA Portal','https://onlinemembership.owwa.gov.ph','🌟'),
+    'POEA Services':'<strong>POEA Services</strong> — Philippine Overseas Employment Administration<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Employment verification and protection')+irow('Website','poea.gov.ph')+irow('Available','Online + Philippine Embassy')+'</div><div class="alert info" style="margin-top:8px">ℹ️ POEA verifies overseas employment contracts, checks employer legitimacy, and resolves employment disputes.</div><ul class="ck-list">'+doc('Verify your employer is POEA-accredited')+doc('Report illegal recruitment and contract violations')+doc('Get Overseas Employment Certificate (OEC)')+'</ul>'+link('POEA Website','https://www.poea.gov.ph','💼'),
+    'POLO-OWWA Assistance':'<strong>POLO-OWWA Assistance</strong> — Philippine Overseas Labor Office<div class="info-grid" style="margin-top:10px">'+irow('Full Name','Philippine Overseas Labor Office')+irow('Purpose','Labor welfare and legal assistance for OFWs')+irow('Where',office)+'</div><div class="alert info" style="margin-top:8px">ℹ️ POLO-OWWA provides legal assistance, conciliation of employment disputes, and welfare services for Filipino workers.</div><div class="section-label">Services</div><ul class="ck-list">'+doc('Employment contract verification')+doc('Legal assistance for labor disputes')+doc('Emergency financial assistance')+doc('Document processing and authentication')+'</ul>',
+    'Legal Assistance':'<strong>Legal Assistance</strong> — Consular legal support in <strong>'+r+'</strong><div class="info-grid" style="margin-top:10px">'+irow('Available Through',office)+irow('For','Nationals in legal distress')+irow('Covers','Criminal, civil, immigration matters')+'</div><div class="alert info" style="margin-top:8px">ℹ️ The embassy provides a list of local lawyers, legal aid referrals, and direct consular intervention for nationals in serious legal situations.</div><ul class="ck-list">'+doc('Request list of lawyers from the embassy')+doc('Ask for consular visit if arrested or detained')+doc('Vienna Convention guarantees right to consular access')+'</ul>',
+    'NICOP (Overseas ID)':'<strong>NICOP — National Identity Card for Overseas Pakistanis</strong><div class="info-grid" style="margin-top:10px">'+irow('For','Pakistani nationals living abroad')+irow('Valid','Lifelong (biometric update may be needed)')+irow('Apply At',office)+irow('Enables','Travel to Pakistan without separate visa')+'</div><div class="alert ok" style="margin-top:8px">✅ NICOP allows overseas Pakistanis to travel to and within Pakistan without requiring a Pakistani visa.</div><ul class="ck-list">'+doc('Pakistani passport (original + copy)')+doc('Foreign nationality document (if applicable)')+doc('Proof of overseas residence')+doc('2 ICAO passport photos')+doc('Application form')+'</ul>'+link('NADRA Portal','https://id.nadra.gov.pk','🪪'),
+    'POC (Pakistan Origin Card)':'<strong>POC — Pakistan Origin Card</strong><div class="info-grid" style="margin-top:10px">'+irow('For','Foreign nationals of Pakistani origin')+irow('Benefits','Multiple-entry, work rights in Pakistan')+irow('Apply At',office)+irow('Valid','Long-term')+'</div><div class="alert info" style="margin-top:8px">ℹ️ POC is for foreign nationals of Pakistani descent — similar to India&#39;s OCI card. Provides multiple-entry privileges to Pakistan.</div><ul class="ck-list">'+doc('Foreign passport (original + copy)')+doc('Evidence of Pakistani origin (parents/grandparents&#39; documents)')+doc('Pakistani parent or spouse&#39; CNIC or passport')+doc('2 ICAO passport photos')+'</ul>'+link('NADRA Portal','https://id.nadra.gov.pk','📋'),
+    'Overseas Pakistani Registration':'<strong>Overseas Pakistani Registration</strong><div class="info-grid" style="margin-top:10px">'+irow('Portal','NADRA / Pakistani Embassy website')+irow('Benefits','Community services, emergency assistance')+irow('Process','Online + embassy verification')+'</div><div class="alert ok" style="margin-top:8px">✅ Registration ensures you receive consular alerts, emergency assistance, and access to welfare programmes for overseas Pakistanis.</div>'+link('Overseas Pakistanis Portal','https://www.op.gov.pk','📋'),
+    'BOESL Services':'<strong>BOESL Services</strong> — Bangladesh Overseas Employment and Services Ltd<div class="info-grid" style="margin-top:10px">'+irow('For','Bangladeshi workers employed abroad')+irow('Purpose','Employment facilitation and welfare')+irow('Website','boesl.gov.bd')+'</div><div class="alert info" style="margin-top:8px">ℹ️ BOESL is the government agency facilitating legal overseas employment for Bangladeshi nationals and providing welfare support.</div><ul class="ck-list">'+doc('Employment contract verification')+doc('Wage dispute resolution')+doc('Emergency repatriation support')+'</ul>'+link('BOESL Website','https://boesl.gov.bd','💼'),
+    'Marriage Certificate':'<strong>Marriage Certificate</strong> — Official registration of marriage abroad<div class="info-grid" style="margin-top:10px">'+irow('Issued By',office)+irow('Processing','2-4 weeks')+irow('Required For','Spousal visa, legal name change, records')+'</div><div class="alert info" style="margin-top:8px">ℹ️ Marriages contracted abroad must be registered at your home country embassy to be valid in your home country.</div><ul class="ck-list">'+doc('Foreign marriage certificate (original, apostilled)')+doc('Both spouses&#39; passports')+doc('Application form and fee')+doc('Translation if not in English')+'</ul>',
+    'Divorce Certificate':'<strong>Divorce Certificate</strong> — Recognition of foreign divorce<div class="info-grid" style="margin-top:10px">'+irow('Issued By',office)+irow('Processing','Varies — may require court order in home country')+'</div><div class="alert warn" style="margin-top:8px">⚠️ Foreign divorces may not be automatically recognised. Check with the embassy whether a court order in your home country is needed.</div><ul class="ck-list">'+doc('Foreign court divorce decree (apostilled)')+doc('Both parties&#39; passports or IDs')+doc('Application form and fee')+'</ul>',
+
+    'Fraud Advisory':'<strong>Fraud Advisory</strong> — Protect yourself from consular scams in '+r+'<div class="alert emer" style="margin-top:10px">🚨 <strong>'+office+' will NEVER call to demand money.</strong> Never pay anyone claiming to be from the '+nat.name+' embassy unless you are physically at the consulate counter in '+r+'.</div><div class="section-label">Common Scams in '+r+'</div><ul class="ck-list">'+doc('<strong>Fake Embassy Calls:</strong> Fraudsters spoof '+nat.name+' consulate numbers, claim your passport has errors, and demand payment over the phone')+doc('<strong>Visa Fixers:</strong> People charging fees to fast-track applications — they take the money and disappear')+doc('<strong>Fake Job Offers:</strong> Job offers requiring upfront fees or surrendering your passport before departure')+doc('<strong>Deportation Threats:</strong> Fake calls threatening immediate deportation unless you pay right away')+'</ul><div class="section-label">How to Stay Safe</div><ul class="ck-list">'+doc('Always verify by calling <strong>'+office+'</strong> directly on the official number')+doc('Appointment slots are always free — '+nat.name+' consulates never charge for booking an appointment')+doc('Official embassy websites end in the official government domain of '+nat.name)+doc('Report all scams to your embassy or local '+r+' police immediately')+'</ul>'+link('Contact '+nat.name+' Embassy',portal,'🏛️'),
+    'Asylum / Duldung Passport':'<strong>Passport for Asylum / Duldung Holders</strong><div class="alert warn" style="margin-top:8px">⚠️ Applying for a passport <strong>may affect your asylum or immigration status</strong>. Consult an immigration lawyer before applying.</div><div class="info-grid" style="margin-top:10px">'+irow('Processing Office',office)+irow('Type','In-person only')+irow('Processing Time','Longer — police verification required')+irow('Legal Advice','Strongly recommended first')+'</div><ul class="ck-list">'+doc('Valid Duldung or Aufenthaltsgestattung document')+doc('Any existing identity document (national ID, old passport)')+doc('2 ICAO passport photos')+doc('Proof of address in Germany')+'</ul>',
+
+    'SLBFE Registration':'<strong>SLBFE Registration</strong> — Sri Lanka Bureau of Foreign Employment<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Mandatory for Sri Lankan workers going abroad')+irow('Website','slbfe.lk')+irow('When','Before departure from Sri Lanka')+irow('Benefits','Insurance, welfare, legal protection')+'</div><div class="alert warn" style="margin-top:8px">&#9888; Registration is <strong>mandatory by law</strong>. Unregistered workers have no legal protection abroad.</div><ul class="ck-list">'+doc('Group life insurance coverage')+doc('Medical expenses coverage abroad')+doc('Repatriation assistance if needed')+doc('Legal protection under Foreign Employment Act')+'</ul>'+link('SLBFE Official Site','https://www.slbfe.lk','&#128203;'),
+
+    'NRFC Account':'<strong>NRFC Account</strong> — Non-Resident Foreign Currency Account (Sri Lanka)<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Hold foreign earnings in Sri Lanka')+irow('Currency','USD, GBP, EUR, AUD, SGD')+irow('Open At','Any licensed commercial bank in Sri Lanka')+irow('Tax','Interest income tax exempt')+'</div><div class="alert ok">&#10003; Tax-free interest and free repatriation of funds.</div><ul class="ck-list">'+doc('Valid passport')+doc('Proof of overseas residence or employment')+doc('Initial deposit in foreign currency')+'</ul>',
+
+    'Repatriation Insurance':'<strong>Repatriation Insurance Scheme</strong> — Sri Lanka<div class="info-grid" style="margin-top:10px">'+irow('Managed By','SLBFE & Sri Lanka Insurance')+irow('Coverage','Death, disability, repatriation costs')+irow('Premium','Included with SLBFE registration')+irow('Claim Via','SLBFE offices or nearest embassy')+'</div><div class="alert info">&#8505; All SLBFE-registered workers are automatically covered. Death abroad scheme covers repatriation and provides death gratuity to family.</div>'+link('SLBFE Insurance Info','https://www.slbfe.lk','&#128737;'),
+
+    'DoFE Registration':'<strong>DoFE Registration</strong> — Department of Foreign Employment, Nepal<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Mandatory before working abroad')+irow('Website','dofe.gov.np')+irow('When','Before signing any overseas employment contract')+irow('Protects','Rights under Foreign Employment Act 2007')+'</div><div class="alert warn">&#9888; Working abroad without DoFE registration is illegal. Your employer must be DoFE-approved.</div><ul class="ck-list">'+doc('Verify your employer is DoFE-approved before signing')+doc('Guaranteed minimum wage protection')+doc('Free repatriation if employer defaults')+doc('Legal action against fraudulent manpower agencies')+doc('Welfare Fund access for illness or injury abroad')+'</ul>'+link('DoFE Official Site','https://dofe.gov.np','&#128203;'),
+
+    'NRN Account':'<strong>NRN Account</strong> — Non-Resident Nepali Banking Account<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Remit and save earnings in Nepal')+irow('Eligible','Nepali nationals working abroad')+irow('Open At','Nepal Rastra Bank approved banks')+irow('Benefits','Higher interest rates, tax concessions')+'</div><div class="alert ok">&#10003; Higher interest rates than standard accounts. Easy remittance from abroad to family in Nepal.</div><ul class="ck-list">'+doc('Valid Nepali passport')+doc('Proof of overseas employment or residence')+doc('Initial deposit (varies by bank)')+'</ul>',
+
+    'Pre-Departure Orientation':'<strong>Pre-Departure Orientation Seminar (PDOS)</strong> — Nepal<div class="info-grid" style="margin-top:10px">'+irow('Conducted By','DoFE approved agencies')+irow('Duration','1 day')+irow('Mandatory','Yes — required before departure')+irow('Covers','Rights, safety, banking, embassy contacts')+'</div><div class="alert info">&#8505; PDOS covers your legal rights, how to send money home, emergency procedures, and embassy contact details. The DoFE clearance certificate issued after PDOS is required at the airport.</div>',
+
+    'NIDCOM Registration':'<strong>NIDCOM Registration</strong> — Nigerians in Diaspora Commission<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Official government registry for Nigerians abroad')+irow('Website','nidcom.gov.ng')+irow('Benefits','Community programs, investment info, welfare')+irow('Process','Online registration — free')+'</div><div class="alert ok">&#10003; NIDCOM connects you to Nigerian government diaspora programs including investment opportunities and emergency assistance.</div><ul class="ck-list">'+doc('Nigerian passport or national ID')+doc('Proof of overseas residence')+doc('Valid email address for account')+'</ul>'+link('NIDCOM Portal','https://nidcom.gov.ng','&#128203;'),
+
+    'Diaspora Bond Program':'<strong>Nigeria Diaspora Bond Program</strong><div class="info-grid" style="margin-top:10px">'+irow('Issued By','Debt Management Office (DMO) Nigeria')+irow('Purpose','Investment in Nigerian infrastructure')+irow('Returns','Competitive yields in USD')+irow('Minimum','$500 USD')+'</div><div class="alert info">&#8505; Government-backed bonds for Nigerians abroad. Earn returns in USD while contributing to national development.</div>'+link('DMO Nigeria','https://www.dmo.gov.ng','&#127970;'),
+
+    'NDE Skills Fund':'<strong>NDE Overseas Skills Development Fund</strong> — Nigeria<div class="info-grid" style="margin-top:10px">'+irow('Run By','National Directorate of Employment')+irow('Purpose','Skills training for returning Nigerians')+irow('Benefits','Training grants, business startup support')+irow('Eligible','Returning Nigerian nationals')+'</div>'+link('NDE Nigeria','https://nde.gov.ng','&#128188;'),
+
+    'Tatkal Passport':'<strong>Tatkal Passport</strong> — Urgent Processing for '+nat.name+' nationals<div class="info-grid" style="margin-top:10px">'+irow('Processing Time','1-3 working days at consulate')+irow('Extra Fee','Additional fee applies (varies by mission)')+irow('Validity','Same as normal passport')+irow('Availability','Limited daily slots — check '+office)+'</div><div class="alert warn">&#9888; Confirm Tatkal availability with <strong>'+office+'</strong> before applying. Slots are limited.</div><div class="steps" style="margin-top:10px">'+step(1,'Apply Online','Select Tatkal option on portal. Pay additional Tatkal fee.')+step(2,'Book Tatkal Appointment','Tatkal appointments are separate — limited daily slots.')+step(3,'Police Verification','May be required depending on service type.')+step(4,'Collect Passport','Ready within 1-3 working days of appointment.')+'</div>'+link('Apply on Portal',portal,'&#9889;'),
+
+    'Apostille vs Attestation':'<strong>Apostille vs Attestation — Which Do You Need?</strong><div class="alert info" style="margin-top:8px">&#8505; One of the most common sources of confusion for '+n+' nationals abroad.</div><div class="info-grid" style="margin-top:10px">'+irow('Apostille','For Hague Convention countries (EU, USA, UK, AU, CA)')+irow('Attestation','For non-Hague countries (UAE, Saudi Arabia, Qatar, Kuwait, China)')+irow('Hague Members','180+ countries')+irow('Non-Hague','Use embassy attestation chain')+'</div><div class="section-label">Simple Rule</div><ul class="ck-list">'+doc('<strong>Living in EU, USA, UK, Australia, Canada?</strong> Get an <strong>Apostille</strong> from the issuing country')+doc('<strong>Living in UAE, Saudi, Qatar, Kuwait?</strong> Get <strong>Attestation</strong> — Notarise → Home MFA → Embassy of destination country')+doc('Always check current requirements with the specific institution requiring the document')+'</ul>',
+
+    'FRRO Registration':'<strong>FRRO Registration</strong> — Foreigners Regional Registration Office (India)<div class="info-grid" style="margin-top:10px">'+irow('Required For','Foreign nationals staying in India > 180 days')+irow('Register Via','e-FRRO portal (online)')+irow('Deadline','Within 14 days of arrival in India')+irow('OCI Holders','Exempt from FRRO registration')+'</div><div class="alert ok">&#10003; OCI card holders are <strong>exempt</strong> from FRRO registration. Relevant when foreign family members visit India for extended periods.</div>'+link('e-FRRO Portal','https://indianfrro.gov.in/eservices/home.jsp','&#127963;'),
+
+    'SSS Overseas Program':'<strong>SSS Overseas Voluntary Program</strong> — Social Security System Philippines<div class="info-grid" style="margin-top:10px">'+irow('For','Filipino OFWs paying SSS abroad')+irow('Benefits','Retirement, disability, death, maternity')+irow('Contribution','USD 160/quarter (voluntary)')+irow('Apply','my.sss.gov.ph')+'</div><div class="alert ok">&#10003; Continuing SSS contributions ensures retirement pension and social security protection for you and your family in the Philippines.</div>'+link('SSS Portal','https://my.sss.gov.ph','&#127985;'),
+
+    'PhilHealth Overseas':'<strong>PhilHealth — Overseas Filipino Members</strong><div class="info-grid" style="margin-top:10px">'+irow('Purpose','Health insurance coverage for OFWs')+irow('Contribution','PHP 2,400/year')+irow('Coverage','Hospitalisation, outpatient, maternity')+irow('Enrol Via','philhealth.gov.ph or Philippine Embassy')+'</div><div class="alert info">&#8505; PhilHealth coverage applies when you visit the Philippines. It also covers your <strong>qualified dependents</strong> (spouse, children, parents) back home.</div>'+link('PhilHealth Portal','https://www.philhealth.gov.ph','&#128154;'),
+
+    'Pag-IBIG Overseas':'<strong>Pag-IBIG Fund MP2 Savings — OFWs</strong><div class="info-grid" style="margin-top:10px">'+irow('Annual Dividend','~7-9% per year (tax-free)')+irow('Minimum Savings','PHP 500/month')+irow('Apply','pagibigfund.gov.ph')+irow('Tenure','5 years')+'</div><div class="alert ok">&#10003; One of the highest guaranteed tax-free returns available for Filipinos. Principal is government-guaranteed.</div>'+link('Pag-IBIG Portal','https://www.pagibigfund.gov.ph','&#127970;'),
+
+    'PDOS Philippines':'<strong>PDOS — Pre-Departure Orientation Seminar</strong><div class="info-grid" style="margin-top:10px">'+irow('Mandatory For','First-time OFWs leaving Philippines')+irow('Duration','4 hours')+irow('Conducted By','POEA-accredited agencies or OWWA')+irow('Certificate','Required to board flight as OFW')+'</div><div class="alert warn">&#9888; Without a PDOS certificate, you <strong>cannot board your flight</strong> as an OFW. Strictly enforced at Philippine airports.</div><ul class="ck-list">'+doc('Your rights as an OFW under Philippine law')+doc('Emergency contacts — POLO, OWWA, DFA hotlines')+doc('Remittance options and financial literacy')+doc('Cultural briefing for your destination country')+'</ul>'+link('OWWA PDOS Info','https://www.owwa.gov.ph','&#128218;'),
+
+    'OFW Money Claims':'<strong>OFW Money Claims / Labour Complaint</strong><div class="info-grid" style="margin-top:10px">'+irow('File With','POLO-OWWA at Philippine Embassy')+irow('Also Via','NLRC Philippines')+irow('Types','Unpaid wages, illegal dismissal, contract breach')+irow('Legal Aid','Free for all OFWs')+'</div><div class="steps" style="margin-top:10px">'+step(1,'Contact POLO-OWWA','Go to the Philippine Embassy and speak with the POLO Labour Attache immediately.')+step(2,'Gather Evidence','Employment contract, pay slips, messages from employer.')+step(3,'File Complaint','POLO mediates between you and employer. If unresolved, forwarded to NLRC Philippines.')+step(4,'Legal Assistance','OWWA provides free legal aid — a lawyer is assigned at no cost.')+'</div>',
+
+    'Roshan Digital Account':'<strong>Roshan Digital Account</strong> — Pakistan Banking for Overseas Pakistanis<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Pakistani bank account managed entirely from abroad')+irow('Currency','PKR, USD, GBP, EUR')+irow('Open Via','100% online — no visit to Pakistan required')+irow('Offered By','HBL, MCB, UBL, Allied Bank, Meezan and others')+'</div><div class="alert ok">&#10003; Open, operate and invest in Pakistan <strong>entirely online</strong>. Invest in Naya Pakistan Certificates (high-yield bonds).</div><ul class="ck-list">'+doc('NICOP and passport')+doc('Proof of overseas address')+doc('Apply at roshandigitalaccount.com')+'</ul>'+link('Roshan Digital','https://www.roshandigitalaccount.com','&#127970;'),
+
+    'Pakistan Overseas Property':'<strong>Overseas Pakistanis Property Rights</strong><div class="info-grid" style="margin-top:10px">'+irow('Authority','Overseas Pakistanis Housing Authority (OPHA)')+irow('Protection','Special courts for overseas property disputes')+irow('Register Via','OPHA portal')+irow('Key Law','Overseas Pakistanis Property Rights Act 2021')+'</div><div class="alert warn">&#9888; Property fraud is the most common crime affecting overseas Pakistanis. Always verify through OPHA before any transaction.</div><ul class="ck-list">'+doc('Never hand original documents to any agent')+doc('Verify property at opha.gov.pk before paying')+doc('Report complaints to FIA Cybercrime Wing')+doc('Use Power of Attorney only with registered lawyers')+'</ul>'+link('OPHA Portal','https://opha.gov.pk','&#127968;'),
+
+    'Wage Earners Bond':'<strong>Wage Earners Development Bond</strong> — Bangladesh<div class="info-grid" style="margin-top:10px">'+irow('Issued By','Bangladesh Government via Sonali Bank')+irow('Yield','~12% per year in BDT')+irow('Tenure','5 years')+irow('Eligible','Non-Resident Bangladeshis (NRBs)')+'</div><div class="alert ok">&#10003; One of the highest government-backed returns for Bangladeshis abroad. Available at Sonali Bank and Bangladesh missions.</div><ul class="ck-list">'+doc('Valid Bangladeshi passport')+doc('Proof of overseas employment or residence')+doc('Purchase via Sonali Bank or Bangladesh missions')+'</ul>',
+
+    'NRB Banking':'<strong>NRB Banking</strong> — Non-Resident Bangladeshi Accounts<div class="info-grid" style="margin-top:10px">'+irow('Account Types','NFCD (foreign currency), RFCD')+irow('Purpose','Hold foreign earnings, earn tax-free interest')+irow('Open At','Any scheduled bank in Bangladesh')+irow('Benefit','Free repatriation, no tax on interest')+'</div><div class="alert info">&#8505; NFCD accounts hold USD/GBP/EUR with <strong>tax-exempt interest</strong>. RFCD accounts are for Bangladeshis returning from abroad.</div>',
+
+    'BMET Registration':'<strong>BMET Registration</strong> — Bureau of Manpower, Employment and Training (Bangladesh)<div class="info-grid" style="margin-top:10px">'+irow('Purpose','Mandatory Smart Card before working abroad')+irow('Website','bmet.gov.bd')+irow('When','Before departure')+irow('Protects','Rights under Foreign Employment and Migrants Act')+'</div><div class="alert warn">&#9888; BMET Smart Card is <strong>mandatory</strong> for Bangladeshi workers. Without it you have no legal protection abroad.</div><ul class="ck-list">'+doc('Apply at any BMET or Probashi Kallyan Bank branch')+doc('Fingerprints and biometric data collected')+doc('Smart Card issued within 3-5 working days')+'</ul>'+link('BMET Official Site','https://bmet.gov.bd','&#128203;'),
+
+    'OCI for Children Abroad':'<strong>OCI Card for Children Born Abroad</strong><div class="info-grid" style="margin-top:10px">'+irow('Eligible','Children with at least one Indian parent or grandparent')+irow('Age Limit','No age limit')+irow('Processing','8-12 weeks')+irow('Both Parents','Must appear in person for minors')+'</div><div class="alert info">&#8505; Children born abroad to Indian parents are eligible for OCI even if they have never visited India. OCI is lifelong.</div><div class="section-label">Key Rules for Minors</div><ul class="ck-list">'+doc('Both parents must be present for OCI application of a minor')+doc('If parents are divorced, a No Objection Certificate from absent parent is required')+doc('Minor OCI must be updated with each new passport until age 20, then once after age 50')+doc('Child does not need separate proof of Indian origin if one parent holds OCI')+'</ul>'+link('OCI Application','https://ociservices.gov.in','&#127963;'),
+  };
+
+  var html = cards[name];
+  if(!html){
+    html='You have selected <strong>'+name+'</strong>. Ask me anything about this service and I will provide detailed, personalised guidance for <strong>'+n+' nationals in '+r+'</strong>.';
+  }
+  var qr = ['What documents do I need for '+name+'?','How long does '+name+' take?','What are the fees?','Where do I apply?'];
+  addAgent(html, qr, null);
+}
+
+function inlineState(v){
+  STATE=v;
+  updateHeader(); updateKeyInfo(); updateQuickLinks();
+  if(v){
+    var con=getConsulate(v);
+    safeSet('sbCon',con?'🏛️ '+(con.name.replace('Embassy of India, ','').replace('Consulate General of India, ','CGI ')):'');
+    if(con){
+      var nat=C[NAT],ctx=getCtx(NAT,RES);
+      var html='<strong>Passport Services</strong> — Indian nationals in <strong>'+v+'</strong><div style="margin-top:10px">'+buildConsulateCard(con)+'</div>'+(ctx&&ctx.oci?'<div class="alert warn" style="margin-top:8px">⚠️ '+ctx.oci+'</div>':'');
+      addAgent(html,[],['Renew passport at this office','Emergency certificate procedure','OCI card application']);
+    }
+  }
+}
+
+function buildConsulateCard(c){
+  return'<a href="'+c.url+'" target="_blank" rel="noopener noreferrer" class="appt-btn">📅 Book Appointment</a>'+
+    '<div class="alert info" style="margin-bottom:10px">ℹ️ '+c.note+'</div>'+
+    '<div class="info-grid">'+
+      '<div class="info-cell"><div class="ic-label">Consulate</div><div class="ic-val">'+c.name+'</div></div>'+
+      '<div class="info-cell"><div class="ic-label">Address</div><div class="ic-val">'+c.addr+'</div></div>'+
+      '<div class="info-cell"><div class="ic-label">Phone</div><div class="ic-val">'+c.phone+'</div></div>'+
+      '<div class="info-cell"><div class="ic-label">Hours</div><div class="ic-val">'+c.hours+'</div></div>'+
+    '</div>'+
+    '<div class="section-label">Jurisdiction</div>'+
+    '<div style="font-size:11px;color:var(--ash)">'+c.states.join(', ')+'</div>';
+}
+
+
+
+// ── DOCUMENT CHECKLIST BUILDER ────────────────────────────────
+var CHECKLISTS = {
+  'Passport Renewal':{base:['Valid passport (original + 2 photocopies of data page)','2 recent ICAO-compliant passport photos (35x45mm, white background, no glasses)','Proof of current address in residence country','Completed application form (from embassy or online portal)','Applicable fee (cash or bank transfer at counter)'],expired:['Expired passport — bring the original expired document'],lost:['Police report / crime reference number (mandatory if lost or stolen)'],tatkal:['Proof of urgency (travel booking, medical certificate, etc.)'],minor:['Both parents must attend in person with their own passports','Birth certificate of the child (original + copy)']},
+  'OCI Fresh Application':{base:['Current foreign passport (original + self-attested copy of data page)','2 recent passport-size photos (white background)','Proof of current address in residence country','Completed OCI application (Part A and Part B, printed and signed)','Application fee (varies by country)'],surrendered:['Surrender Certificate of home country passport'],origin:['Proof of origin: old passport / parent or grandparent passport copy'],minor:['Both parents must appear in person with their passports for minor applications','Birth certificate of the child (original)']},
+  'Police Clearance Certificate':{base:['Valid passport (copy of data page and current visa/residence permit)','Proof of current address in residence country','Proof of last home country address (utility bill or equivalent)','Completed PCC application form'],postal:['If applying by post: include pre-paid return envelope, all copies must be self-attested']},
+  'Attestation Services':{base:['Original document to be attested','Self-attested photocopy of the document','Proof of identity (passport data page copy)','Application form and applicable fee'],education:['University verification letter (if required by the institution requesting attestation)'],apostille:['For Hague Convention countries: obtain apostille from the issuing country first, before embassy attestation']},
+  'Emergency Certificate':{base:['Police report (mandatory if passport was lost or stolen — must obtain before visiting embassy)','2 recent ICAO-compliant passport photos','Any proof of identity (old passport copy, national ID, driving licence)','Proof of current address in residence country','Onward travel evidence (flight booking, itinerary)']},
+  'Visa Services':{base:['Valid passport (minimum 6 months validity beyond intended travel dates)','Completed visa application form (check specific requirements for destination)','Recent passport-size photos (verify exact specs for destination country)','Travel insurance (required for Schengen and many other destinations)','Proof of accommodation (hotel booking, invitation letter, or host address)','Financial proof (last 3-6 months bank statements)'],schengen:['For Schengen: detailed travel itinerary, return ticket, proof of sufficient funds (approx €100/day)'],work:['For work visa: signed employment contract, employer sponsorship letter, relevant qualifications or degree'],family:['For family reunification: marriage/birth certificate, sponsor proof of income and accommodation in destination country']},
+  'Surrender Certificate':{base:['Original home country passport to surrender','New foreign nationality passport (original + self-attested copy)','Naturalization certificate or citizenship proof from new country','Proof of current address in residence country','2 recent passport-size photos','Completed application form and fee']},
+  'SLBFE Registration':{base:['Valid Sri Lankan passport or NIC','Completed registration form (from SLBFE office or district branch)','Employment contract (original or copy verified by Sri Lankan embassy)','Medical fitness certificate from SLBFE-approved doctor']},
+  'NICOP Application':{base:['Valid Pakistani passport (original + self-attested copy)','CNIC (Computerised National Identity Card) or old NICOP','2 recent ICAO passport photos (35x45mm, white background)','Proof of overseas address (utility bill, bank statement)','Completed NICOP application form','Application fee (varies by mission)'],renewal:['Previous NICOP (original)'],lost:['Police report from local '+C[RES]?C[RES].name:'country'+' police (mandatory if lost or stolen)'],minor:['Both parents must attend with their CNICs or NICOPs','Birth certificate of the child']},
+  'BMET Registration':{base:['Valid Bangladeshi passport (original)','Completed BMET registration form (from BMET office or branch)','DoFE-approved or BMET-verified employment contract','Medical fitness certificate from approved doctor','Recent passport-size photos'],agent:['Recruitment agency approval letter (if going through an agency)','Agency registration certificate copy']},
+  'DoFE Registration':{base:['Valid Nepali passport','DoFE-approved employment contract (verify employer at dofe.gov.np)','Copy of employment permit from destination country (if required)','Completed registration form at DoFE office']},
+};
+function showChecklistBuilder(){
+  var nat=C[NAT]||C.IN;
+  // Filter checklists relevant to this nationality
+  var natChecklists={
+    IN:['Passport Renewal','OCI Fresh Application','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services','Surrender Certificate'],
+    PH:['Passport Renewal','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services'],
+    PK:['Passport Renewal','NICOP Application','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services','Surrender Certificate'],
+    BD:['Passport Renewal','BMET Registration','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services'],
+    LK:['Passport Renewal','SLBFE Registration','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services'],
+    NP:['Passport Renewal','DoFE Registration','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services']
+  };
+  var defaultChecklists=['Passport Renewal','Surrender Certificate','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services'];
+  var relevant=natChecklists[NAT]||defaultChecklists;
+  var opts=relevant.filter(function(s){return CHECKLISTS[s];}).map(function(s){
+    return'<option value="'+s+'">'+s+'</option>';
+  }).join('');
+  var html='<strong>&#128203; Document Checklist Builder</strong> — '+nat.dem+' nationals in '+(C[RES]?C[RES].name:'your country')+
+    '<div class="alert info" style="margin-top:8px">&#8505; Select your service and tick any situations that apply to get your personalised document checklist.</div>'+
+    '<select id="clService" class="ob-state-select" style="margin-top:10px;margin-bottom:8px;display:block" onchange="updateChecklist()">'+
+    '<option value="">-- Select service --</option>'+opts+'</select>'+
+    '<div id="clOptions"></div>'+
+    '<div id="clResult"></div>';
+  addAgent(html,[],['What does ICAO-compliant photo mean?','Can I submit photocopies instead of originals?','Which services accept postal applications?']);
+}
+function updateChecklist(){
+  var sel=document.getElementById('clService');if(!sel||!sel.value)return;
+  var svc=sel.value;var cl=CHECKLISTS[svc];if(!cl)return;
+  var optDiv=document.getElementById('clOptions');if(!optDiv)return;
+  var optKeys=Object.keys(cl).filter(function(k){return k!=='base';});
+  var optLabels={expired:'My passport is expired',lost:'My passport is lost or stolen',tatkal:'I need urgent/Tatkal processing',minor:'This application is for a child (under 18)',surrendered:'I previously held a home country passport',origin:'I need to prove country of origin',postal:'I am applying by post',education:'This is an educational certificate',apostille:'I am in a Hague Convention country (EU, USA, UK, AU, CA)',schengen:'Applying for Schengen or EU visa',work:'Applying for a work or employment visa',family:'Applying for family reunification or spouse visa'};
+  if(optKeys.length){
+    var checks=optKeys.map(function(k){return'<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ash);margin-bottom:7px;cursor:pointer"><input type="checkbox" id="cl_'+k+'" onchange="renderChecklist()" style="accent-color:var(--saffron);width:14px;height:14px"> '+(optLabels[k]||k)+'</label>';}).join('');
+    optDiv.innerHTML='<div style="margin:10px 0 6px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--saffron)">Apply if relevant:</div>'+checks;
+  } else { optDiv.innerHTML=''; }
+  renderChecklist();
+}
+function renderChecklist(){
+  var sel=document.getElementById('clService');if(!sel||!sel.value)return;
+  var svc=sel.value;var cl=CHECKLISTS[svc];if(!cl)return;
+  var opts=[];
+  Object.keys(cl).filter(function(k){return k!=='base';}).forEach(function(k){var cb=document.getElementById('cl_'+k);if(cb&&cb.checked)opts.push(k);});
+  var items=cl.base.slice();
+  opts.forEach(function(o){if(cl[o])items=items.concat(cl[o]);});
+  var res=document.getElementById('clResult');if(!res)return;
+  res.innerHTML='<div class="section-label" style="margin-top:12px">Your Checklist ('+items.length+' items)</div>'+
+    '<ul class="ck-list">'+items.map(function(i){return'<li>'+i+'</li>';}).join('')+'</ul>'+
+    '<div class="alert ok" style="margin-top:8px">&#10003; Bring originals AND self-attested photocopies of every document. Keep digital copies on your phone as backup.</div>';
+}
+
+// ── PROCESSING TIME ESTIMATOR ────────────────────────────────
+var PROC_TIMES = {
+  'Passport Renewal':{min:3,max:10,unit:'weeks',notes:'Tatkal: 1-3 days. Normal: varies by mission workload.'},
+  'OCI Fresh Application':{min:8,max:14,unit:'weeks',notes:'VFS processing plus courier time included.'},
+  'OCI Renewal or Loss':{min:6,max:10,unit:'weeks',notes:'Faster if only passport number changed.'},
+  'Surrender Certificate':{min:3,max:6,unit:'weeks',notes:'Required before OCI application.'},
+  'Police Clearance Certificate':{min:2,max:5,unit:'weeks',notes:'Depends on home country police verification speed.'},
+  'Attestation Services':{min:1,max:5,unit:'days',notes:'Simple documents: 1-2 days. Complex or notarised documents: 3-5 days.'},
+  'Emergency Certificate':{min:24,max:72,unit:'hours',notes:'Walk-in only. Valid for one-way travel home.'},
+  'Visa Services':{min:5,max:21,unit:'days',notes:'Varies significantly by visa type and issuing mission.'},
+  'Birth Certificate':{min:2,max:4,unit:'weeks',notes:'Depends on home country record lookup.'},
+  'NRI Certificate':{min:1,max:2,unit:'weeks',notes:'Usually straightforward.'},
+  'NICOP (Overseas ID)':{min:4,max:8,unit:'weeks',notes:'Via NADRA. Faster with Smart Card upgrade option.'},
+  'OCI for Children Abroad':{min:8,max:14,unit:'weeks',notes:'Both parents must attend appointment in person.'},
+  'BMET Registration':{min:3,max:7,unit:'days',notes:'Smart Card issued at BMET district office.'},
+  'DoFE Registration':{min:1,max:3,unit:'days',notes:'Must complete before departure from Nepal.'},
+  'SLBFE Registration':{min:1,max:2,unit:'days',notes:'At SLBFE district office before departure.'},
+  'Tatkal Passport':{min:1,max:3,unit:'days',notes:'Additional fee applies. Limited daily slots at consulate.'},
+  'Marriage Certificate':{min:2,max:4,unit:'weeks',notes:'Apostille/attestation may add extra time.'},
+  'Roshan Digital Account':{min:1,max:5,unit:'days',notes:'Online process. Bank KYC review varies.'},
+};
+function showTimeEstimator(){
+  var nat=C[NAT]||C.IN;
+  // Filter services relevant to this nationality
+  var natServices={
+    IN:['Passport Renewal','Tatkal Passport','OCI Fresh Application','OCI Renewal or Loss','OCI for Children Abroad','Surrender Certificate','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services','Birth Certificate','Marriage Certificate','NRI Certificate'],
+    PH:['Passport Renewal','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services','Birth Certificate','Marriage Certificate'],
+    PK:['Passport Renewal','NICOP (Overseas ID)','Surrender Certificate','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services','Birth Certificate','Marriage Certificate','Roshan Digital Account'],
+    BD:['Passport Renewal','BMET Registration','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services','Birth Certificate','Marriage Certificate'],
+    LK:['Passport Renewal','SLBFE Registration','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services','Birth Certificate','Marriage Certificate'],
+    NP:['Passport Renewal','DoFE Registration','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services','Birth Certificate','Marriage Certificate']
+  };
+  var defaultServices=['Passport Renewal','Surrender Certificate','Police Clearance Certificate','Attestation Services','Emergency Certificate','Visa Services','Birth Certificate','Marriage Certificate'];
+  var relevant=natServices[NAT]||defaultServices;
+  var opts=relevant.filter(function(k){return PROC_TIMES[k];}).map(function(k){
+    return'<option value="'+k+'">'+k+'</option>';
+  }).join('');
+  var html='<strong>&#9201; Processing Time Estimator</strong> — '+nat.dem+' nationals in '+(C[RES]?C[RES].name:'your country')+
+    '<div class="alert info" style="margin-top:8px">&#8505; Estimates are typical ranges. Actual times vary by mission volume, completeness of documents, and time of year.</div>'+
+    '<select id="ptSelect" class="ob-state-select" onchange="updateEstimate(this.value)" style="margin-top:10px;display:block">'+
+    '<option value="">-- Select a service --</option>'+opts+'</select>'+
+    '<div id="ptResult" style="margin-top:10px"></div>';
+  addAgent(html,[],['What documents speed up processing?','What causes delays?','Can I check my application status online?']);
+}
+function updateEstimate(key){
+  if(!key) return;
+  var pt=PROC_TIMES[key]; if(!pt) return;
+  var res=document.getElementById('ptResult'); if(!res) return;
+  var nat=C[NAT]||C.IN;
+  var resName=C[RES]?C[RES].name:'your country';
+  var timeStr=pt.min===pt.max?pt.min+' '+pt.unit:pt.min+'&#8211;'+pt.max+' '+pt.unit;
+  res.innerHTML=
+    '<div class="info-grid">'+
+    '<div class="info-cell"><div class="ic-label">Service</div><div class="ic-val">'+key+'</div></div>'+
+    '<div class="info-cell"><div class="ic-label">Estimated Time</div><div class="ic-val" style="color:var(--saffron-light);font-weight:700">'+timeStr+'</div></div>'+
+    '<div class="info-cell"><div class="ic-label">For</div><div class="ic-val">'+nat.dem+' in '+resName+'</div></div>'+
+    '</div>'+
+    '<div class="alert warn" style="margin-top:8px">&#128204; '+pt.notes+'</div>'+
+    '<div class="alert ok" style="margin-top:6px">&#10003; <strong>To avoid delays:</strong> Submit complete documents, respond to embassy queries within 48 hrs, book the earliest available appointment.</div>';
+}
+function buildStateSelector(){
+  var gcMap={IN:GC,PK:GC_PK,BD:GC_BD,NG:GC_NG,EG:GC_EG};
+  var gc=gcMap[NAT]||GC;
+  var sel=document.getElementById('stateSelectEl');
+  if(!sel) return;
+  sel.innerHTML='<option value="">-- Select your state --</option>';
+  var icons=['🏛️','🏢','🏬','🏪'];
+  Object.keys(gc).forEach(function(key,idx){
+    var con=gc[key];
+    var grp=document.createElement('optgroup');
+    grp.label=(icons[idx]||'🏢')+' '+con.name;
+    (con.states||[]).forEach(function(state){
+      var opt=document.createElement('option');
+      opt.value=state; opt.textContent=state;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  });
+  sel.value=''; STATE=null;
+  var prev=$('consulatePreview'); if(prev) prev.style.display='none';
+}
+
+// ── WELCOME ───────────────────────────────────────────────────
+function sendWelcome(){
+  var nat=C[NAT],res=C[RES];if(!nat||!res)return;
+  var ctx=getCtx(NAT,RES);
+  var con=(RES==='DE'&&STATE&&['IN','PK','BD','NG','EG'].indexOf(NAT)!==-1)?getConsulate(STATE):null;
+  var office=con?con.name:(ctx?ctx.office:'Your nearest '+nat.dem+' embassy');
+  var portal=ctx?ctx.portal:nat.mfa;
+  var html;
+  if(con){
+    html='Welcome! I am your <strong>ConsulAI</strong> assistant for <strong>'+nat.dem+' nationals in '+res.name+'</strong>.'+
+      buildConsulateCard(con)+
+      (ctx&&ctx.oci?'<div class="alert warn" style="margin-top:8px">⚠️ '+ctx.oci+'</div>':'');
+  } else if(ctx){
+    html='Welcome! I am your <strong>ConsulAI</strong> assistant for <strong>'+nat.dem+' nationals in '+res.name+'</strong>.'+
+      '<div class="info-grid" style="margin-top:10px">'+
+        '<div class="info-cell"><div class="ic-label">Your Embassy</div><div class="ic-val">'+office+'</div></div>'+
+        '<div class="info-cell"><div class="ic-label">Passport Renewal</div><div class="ic-val">'+ctx.renewal+'</div></div>'+
+        '<div class="info-cell"><div class="ic-label">Emergency Cert</div><div class="ic-val">'+ctx.ec+'</div></div>'+
+        '<div class="info-cell"><div class="ic-label">Portal</div><div class="ic-val"><a href="'+portal+'" target="_blank" style="color:var(--blue)">'+portal.replace('https://','')+'</a></div></div>'+
+      '</div>'+
+      (ctx.oci&&NAT==='IN'?'<div class="alert warn" style="margin-top:8px">⚠️ '+ctx.oci+'</div>':'');
+  } else {
+    html='Welcome! I am your <strong>ConsulAI</strong> assistant for <strong>'+nat.dem+' nationals in '+res.name+'</strong>.'+
+      '<div class="info-grid" style="margin-top:10px">'+
+        '<div class="info-cell"><div class="ic-label">Your Embassy</div><div class="ic-val">'+office+'</div></div>'+
+        '<div class="info-cell"><div class="ic-label">MFA Website</div><div class="ic-val"><a href="'+nat.mfa+'" target="_blank" style="color:var(--blue)">'+nat.mfa.replace('https://','')+'</a></div></div>'+
+        '<div class="info-cell"><div class="ic-label">Emergency</div><div class="ic-val">'+nat.emer+'</div></div>'+
+        '<div class="info-cell"><div class="ic-label">Local Emergency</div><div class="ic-val">'+res.emer+'</div></div>'+
+      '</div>'+
+      '<div class="alert info" style="margin-top:8px">ℹ️ Ask me anything — I will provide personalised consular guidance for your specific situation.</div>';
+  }
+  var qr=ctx?['Renew my passport','Apply for a visa','Emergency — lost passport',(NAT==='IN'?'OCI card process':'Citizenship & documents')]:['Passport renewal process','Visa requirements','Emergency support','Contact my embassy'];
+  addAgent(html,qr,null);
+}
+
+// ── CHAT ──────────────────────────────────────────────────────
+function addAgent(html, qrs, suggs){
+  qrs=qrs||[]; suggs=suggs||[];
+  var c=$('chatMsgs');
+  var d=document.createElement('div');d.className='msg';
+  d.innerHTML='<div class="av agent">⚖️</div><div><div class="bub agent">'+html+'</div></div>';
+  var inner=d.querySelector('div:last-child');
+  if(qrs.length){
+    var row=document.createElement('div');row.className='qr-row';
+    qrs.forEach(function(q){var b=document.createElement('div');b.className='qr';b.textContent=q;b.onclick=function(){quickSend(q);};row.appendChild(b);});
+    inner.appendChild(row);
+  }
+  if(suggs&&suggs.length){
+    var sr=document.createElement('div');sr.className='sugg-row';
+    var lbl=document.createElement('div');lbl.className='sugg-label';lbl.textContent='Suggested follow-ups';
+    sr.appendChild(lbl);
+    suggs.forEach(function(s){var b=document.createElement('div');b.className='sugg-btn';b.textContent=s;b.onclick=function(){quickSend(s);};sr.appendChild(b);});
+    inner.appendChild(sr);
+  }
+  c.appendChild(d);scrollChat();
+}
+function addUser(text){
+  var c=$('chatMsgs');
+  var d=document.createElement('div');d.className='msg user';
+  d.innerHTML='<div class="av user">👤</div><div class="bub user">'+text+'</div>';
+  c.appendChild(d);scrollChat();
+}
+function addTyping(){
+  var c=$('chatMsgs');
+  var d=document.createElement('div');d.className='msg';d.id='typingMsg';
+  d.innerHTML='<div class="av agent">⚖️</div><div class="typing-bub"><span></span><span></span><span></span></div>';
+  c.appendChild(d);scrollChat();
+}
+function removeTyping(){var e=$('typingMsg');if(e)e.remove();}
+function scrollChat(){var c=$('chatMsgs');c.scrollTop=c.scrollHeight;}
+function quickSend(t){$('chatIn').value=t;sendMsg();}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+// ── AI ────────────────────────────────────────────────────────
+
+
+async function sendMsg(){
+  var inp=$('chatIn');
+  var text=inp.value.trim();
+  if(!text||TYPING)return;
+  inp.value='';inp.style.height='auto';
+  addUser(text);TYPING=true;addTyping();
+
+  var nat=C[NAT]||C.IN;
+  var res=C[RES]||C.DE;
+  var ctx=getCtx(NAT,RES);
+  var con=(RES==='DE'&&STATE&&['IN','PK','BD','NG','EG'].indexOf(NAT)!==-1)?getConsulate(STATE):null;
+  var office=con?con.name:(ctx?ctx.office:nat.name+' Embassy in '+res.name);
+  var portal=ctx?ctx.portal:nat.mfa;
+
+  var sp=[
+    'You are ConsulAI — a friendly, expert consular services assistant.',
+    'You help '+nat.dem+' nationals living in '+res.name+' with any consular, visa, or immigration question.',
+    '',
+    'USER PROFILE:',
+    '- Nationality: '+nat.dem+' ('+nat.name+' passport)',
+    '- Living in: '+res.name,
+    '- Current service selected: '+SVC,
+    '- Their embassy/consulate: '+office,
+    (ctx?'- Passport renewal time: '+ctx.renewal:''),
+    '',
+    'You can answer ANY question including visa law, immigration rules, and consular procedures:',
+    'Visa applications, refusals, appeals, extensions, work permits, student visas,',
+    'family reunification, spouse visas, passport renewal, emergency certificates,',
+    'OCI/NICOP/POC cards, citizenship, naturalisation, dual nationality,',
+    'document attestation, apostille, PCC, detained nationals, repatriation,',
+    'NRI banking, property, tax, processing times, fees, document checklists.',
+    '',
+    'RESPONSE FORMAT (use HTML only, no markdown):',
+    'Steps: <div class="steps"><div class="step"><span class="step-num">1</span><div class="step-body"><strong>Title</strong><br>Detail</div></div></div>',
+    'Docs: <ul class="ck-list"><li>Item</li></ul>',
+    'Facts: <div class="info-grid"><div class="info-cell"><div class="ic-label">Label</div><div class="ic-val">Value</div></div></div>',
+    'Warn: <div class="alert warn">text</div>  Good: <div class="alert ok">text</div>  Info: <div class="alert info">text</div>',
+    'Use <strong> for fees, deadlines, document names.',
+    'Personalise every answer to '+nat.dem+' in '+res.name+'.',
+    'End with: SUGGESTIONS:["q1","q2","q3"]'
+  ].filter(Boolean).join('\n');
+
+  var msgs=[];
+  document.querySelectorAll('#chatMsgs .msg').forEach(function(b){
+    var ub=b.querySelector('.bub.user');
+    var ab=b.querySelector('.bub.agent');
+    if(ub&&ub.textContent.trim())
+      msgs.push({role:'user',content:ub.textContent.trim()});
+    else if(ab&&ab.textContent.trim()&&!b.id)
+      msgs.push({role:'assistant',content:ab.textContent.trim().replace(/SUGGESTIONS[\s\S]*/,'').trim()});
+  });
+  if(msgs.length&&msgs[msgs.length-1].role==='user') msgs.pop();
+  if(msgs.length>8) msgs=msgs.slice(msgs.length-8);
+  msgs.push({role:'user',content:text});
+
+  var payload={
+    model:'claude-sonnet-4-20250514',
+    max_tokens:2048,
+    system:sp,
+    messages:msgs,
+    tools:[{type:'web_search_20250305',name:'web_search'}]
+  };
+
+  try{
+    var r=await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+
+    var data;
+    try{ data=await r.json(); }
+    catch(parseErr){
+      // Response is not JSON — probably HTML 404 page (not on Vercel)
+      throw new Error('API endpoint not found — check your Vercel deployment and vercel.json configuration.');
+    }
+
+    removeTyping();
+
+    if(data.error){
+      addAgent('<div class="alert emer">&#9889; '+escHtml(data.error.message||JSON.stringify(data.error))+'</div>',[],['Try again']);
+      TYPING=false;return;
+    }
+
+    // Handle response including tool_use blocks (web search results)
+    var full='';
+    if(data.content){
+      data.content.forEach(function(block){
+        if(block.type==='text') full+=block.text||'';
+        // tool_use blocks are handled server-side by the API
+      });
+    }
+    if(!full) full='I could not generate a response. Please try again.';
+
+    var sm=full.match(/SUGGESTIONS\s*:\s*\[([^\]]+)\]/i);
+    var suggs=[];
+    if(sm){try{suggs=JSON.parse('['+sm[1]+']');}catch(ex){}}
+    var clean=full.replace(/SUGGESTIONS\s*:\s*\[[\s\S]*?\]/gi,'').trim();
+    addAgent(mdToHtml(clean),[],suggs);
+
+  }catch(ex){
+    removeTyping();
+    var msg=ex.message||'Unknown error';
+    addAgent(
+      '<div class="alert emer">&#9889; '+escHtml(msg)+'</div>'+
+      '<div class="alert info" style="margin-top:6px">&#8505; If you have deployed on Vercel, go to <strong>Settings → Environment Variables</strong>, confirm <strong>ANTHROPIC_API_KEY</strong> is set, then click <strong>Redeploy</strong>.</div>',
+      [],['Retry']
+    );
+  }
+  TYPING=false;
+}
+function escHtml(t){
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── FOLLOW-UP BANK ────────────────────────────────────────────
+function updateFollowupBank(){
+  var bank=$('followupBank');if(!bank)return;
+  var nat=C[NAT]||{dem:'Indian',name:'India'};
+  var res=C[RES]||{name:'your country'};
+  var r=res.name,n=nat.dem;
+  var topics={
+    'Visa Services':             [{i:'🛂',q:'What visa types can I apply for at the consulate in '+r+'?'},{i:'📋',q:'What documents are needed for a visa application?'},{i:'⏱',q:'How long does visa processing take?'},{i:'💶',q:'What are the current visa fees?'}],
+    'Travel Advisories':         [{i:'🌍',q:'Which countries can I visit visa-free on my passport?'},{i:'⚠️',q:'Are there any active travel warnings for me?'},{i:'💉',q:'What vaccinations do I need for travel?'}],
+    'Passport Renewal':          [{i:'🔄',q:'How do I renew my passport in '+r+'?'},{i:'⚡',q:'Is there a fast-track or urgent renewal option?'},{i:'📋',q:'What documents do I need for passport renewal?'},{i:'📅',q:'How do I book a passport appointment in '+r+'?'}],
+    'Lost or Damaged Passport':  [{i:'🚨',q:'My passport is lost in '+r+' — what are the steps?'},{i:'📋',q:'What documents do I need to report a lost passport?'},{i:'📄',q:'Can I get an Emergency Certificate instead?'}],
+    'Emergency Certificate':     [{i:'📄',q:'What is an Emergency Certificate and when do I need it?'},{i:'📋',q:'What documents are needed for an EC?'},{i:'⏱',q:'How quickly can an EC be issued?'}],
+    'OCI Fresh Application':     [{i:'🏷️',q:'Who is eligible for an OCI card?'},{i:'📋',q:'What documents are required for a fresh OCI application?'},{i:'⏱',q:'How long does OCI processing take?'}],
+    'Attestation Services':      [{i:'📎',q:'Which documents can the consulate attest?'},{i:'📋',q:'What is the process for document attestation?'},{i:'💶',q:'What are the attestation fees?'}],
+    'Police Clearance Certificate':[{i:'👮',q:'How do I apply for a PCC from the consulate in '+r+'?'},{i:'📋',q:'What documents are needed for PCC?'},{i:'⏱',q:'How long does PCC processing take?'}],
+    'MADAD Portal':              [{i:'💻',q:'What is the MADAD portal and how can it help me?'},{i:'🚨',q:'How do I file a consular complaint on MADAD?'}],
+    'NRI Registration':          [{i:'📋',q:'How do I register as a '+n+' national living in '+r+'?'},{i:'❓',q:'What are the benefits of registering with the embassy?'}]
+  };
+  var items=topics[SVC]||[];
+  while(bank.children.length>1)bank.removeChild(bank.lastChild);
+  if(!items.length){bank.style.display='none';return;}
+  bank.style.display='flex';
+  items.forEach(function(item){
+    var btn=document.createElement('button');btn.className='followup-btn';
+    btn.innerHTML='<span class="f-icon">'+item.i+'</span>'+item.q;
+    btn.onclick=function(){quickSend(item.q);};
+    bank.appendChild(btn);
+  });
+}
+
+// ── APPLICATION TRACKER ───────────────────────────────────────
+function saveApp(app){
+  var apps=getApps();apps.unshift(app);
+  try{localStorage.setItem('cai_apps',JSON.stringify(apps));}catch(e){}
+  renderTrackerSidebar();
+}
+function getApps(){try{return JSON.parse(localStorage.getItem('cai_apps')||'[]');}catch(e){return[];}}
+function renderTrackerSidebar(){
+  var apps=getApps();
+  var sec=$('trackerSection'),panel=$('trackerPanel'),badge=$('trackerBadge');
+  if(!sec||!panel)return;
+  if(!apps.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  if(badge)badge.textContent=apps.length;
+  var SL={submitted:'Submitted',processing:'In Progress',ready:'Ready',collected:'Collected'};
+  panel.innerHTML='';
+  apps.forEach(function(a){
+    var dt=new Date(a.at).toLocaleDateString('en-DE',{day:'2-digit',month:'short',year:'numeric'});
+    var item=document.createElement('div');item.className='tracker-item';
+    item.innerHTML='<div class="tracker-ref">#'+a.ref+'</div><div class="tracker-meta">'+a.svc+' · '+dt+'</div><div class="tracker-status '+a.status+'">'+(SL[a.status]||a.status)+'</div>';
+    item.onclick=(function(ref){return function(){openTracker(ref);};})(a.ref);
+    panel.appendChild(item);
+  });
+}
+function openTracker(ref){
+  var apps=getApps();var app=apps.find(function(a){return a.ref===ref;});if(!app)return;
+  safeSet('trackTitle',app.svc);
+  safeSet('trackRef','#'+app.ref+' · '+app.office.split(',')[0]);
+  var stages=[{k:'submitted',l:'Submitted',d:'Application received.'},{k:'processing',l:'Processing',d:'Documents being verified.'},{k:'ready',l:'Ready to Collect',d:'Visit consulate to collect.'},{k:'collected',l:'Collected',d:'Process complete.'}];
+  var ci=stages.findIndex(function(s){return s.k===app.status;});
+  var sub=new Date(app.at);
+  var tlHtml='<div class="timeline">'+stages.map(function(s,i){
+    var state=i<ci?'done':i===ci?'active':'pending';
+    var est=new Date(sub.getTime()+i*14*24*3600*1000);
+    return'<div class="tl-step"><div class="tl-dot '+state+'">'+(state==='done'?'✓':i+1)+'</div><div class="tl-body"><div class="tl-title'+(state==='pending'?' pending':'')+'">'+s.l+'</div><div class="tl-desc">'+s.d+'</div><div class="tl-date">'+(i<=ci?'':'Est. ')+est.toLocaleDateString('en-DE',{day:'2-digit',month:'short'})+'</div></div></div>';
+  }).join('')+'</div>';
+  var ig='<div class="info-grid" style="margin-top:4px"><div class="info-cell"><div class="ic-label">Service</div><div class="ic-val">'+app.svc+'</div></div><div class="info-cell"><div class="ic-label">Office</div><div class="ic-val">'+app.office.split(',')[0]+'</div></div></div>';
+  safeHtml('trackBody',ig+tlHtml);
+  var tb=$('trackBody');
+  var next=stages[ci+1];
+  if(next){
+    var btn=document.createElement('button');
+    btn.style.cssText='width:100%;padding:8px;background:rgba(232,147,58,.1);border:1px solid rgba(232,147,58,.3);color:var(--saffron-light);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;margin-top:8px;font-family:Outfit,sans-serif';
+    btn.innerHTML='Mark as: '+next.l+' →';
+    btn.onclick=(function(r,k){return function(){updateAppStatus(r,k);};})(ref,next.k);
+    tb.appendChild(btn);
+  }else{
+    var d=document.createElement('div');d.className='alert ok';d.style.marginTop='8px';d.innerHTML='✓ Application complete';tb.appendChild(d);
+  }
+  $('trackerModal').classList.remove('hidden');
+}
+function updateAppStatus(ref,status){
+  var apps=getApps();
+  apps=apps.map(function(a){if(a.ref===ref){a.status=status;}return a;});
+  try{localStorage.setItem('cai_apps',JSON.stringify(apps));}catch(e){}
+  renderTrackerSidebar();openTracker(ref);
+}
+function closeTracker(){$('trackerModal').classList.add('hidden');}
+
+// ── EMERGENCY ─────────────────────────────────────────────────
+function openEmer(){
+  var nat=C[NAT],res=C[RES];
+  var sub=nat?nat.dem+' nationals in '+(res?res.name:''):'Select situation below';
+  safeSet('emerSub',sub);
+  $('emerTriage').style.display='block';
+  $('emerDetail').style.display='none';
+  document.querySelectorAll('.emer-cat').forEach(function(c){c.classList.remove('active');});
+  $('emerModal').classList.remove('hidden');
+}
+function closeEmer(){$('emerModal').classList.add('hidden');}
+function backToEmerTriage(){
+  $('emerTriage').style.display='block';
+  $('emerDetail').style.display='none';
+}
+function showEmerDetail(key){
+  var EMER=getEmerData();
+  var data=EMER[key];if(!data)return;
+  var con=(RES==='DE'&&STATE&&['IN','PK','BD','NG','EG'].indexOf(NAT)!==-1)?getConsulate(STATE):null;
+  var stepsHtml=data.s.map(function(s,i){
+    return'<div class="emer-step"><div class="emer-step-num">'+(i+1)+'</div><div class="emer-step-body"><strong>'+s.h+'</strong><br>'+s.b+'</div></div>';
+  }).join('');
+  var hotlines='';
+  for(var i=0;i<data.hot.length;i+=2){
+    hotlines+='<div class="emer-hotline"><div><div class="emer-hotline-name">'+data.hot[i]+'</div><div class="emer-hotline-num">'+data.hot[i+1]+'</div></div><button class="emer-call-btn">Call</button></div>';
+  }
+  if(con){
+    hotlines='<div class="emer-hotline" style="border-color:rgba(232,147,58,.3)"><div><div class="emer-hotline-name" style="color:var(--saffron-light)">Your Consulate — '+con.name.split(',').pop().trim()+'</div><div class="emer-hotline-num">'+con.emer+'</div></div><button class="emer-call-btn" style="border-color:rgba(232,147,58,.4);color:var(--saffron)">Call</button></div>'+hotlines;
+  }
+  safeHtml('emerDetailContent','<div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:4px">'+data.t+'</div><div class="emer-steps">'+stepsHtml+'</div><div style="margin-top:12px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--saffron);margin-bottom:7px">Emergency Contacts</div>'+hotlines);
+  $('emerTriage').style.display='none';
+  $('emerDetail').style.display='block';
+}
+
+// ── SOS ───────────────────────────────────────────────────────
+function openSOS(){
+  var nat=C[NAT],res=C[RES];
+  safeSet('sosSub','Critical situations for '+(nat?nat.dem:'')+' nationals in '+(res?res.name:''));
+  var con=(RES==='DE'&&STATE&&['IN','PK','BD','NG','EG'].indexOf(NAT)!==-1)?getConsulate(STATE):null;
+  var ca=$('sosConsulateAlert');
+  if(ca)ca.innerHTML='<div class="alert emer" style="font-size:11px">'+(con?'<strong>'+con.name+'</strong>: '+con.emer:'<strong>MEA 24/7:</strong> +91-11-2301-2113  |  India toll-free: 1800-11-8797')+'</div>';
+  $('sosGrid').style.display='block';
+  $('sosDetail').style.display='none';
+  document.querySelectorAll('.sos-sc').forEach(function(s){s.classList.remove('active');});
+  $('sosModal').classList.remove('hidden');
+}
+function closeSOS(){$('sosModal').classList.add('hidden');}
+function backToSOSGrid(){$('sosGrid').style.display='block';$('sosDetail').style.display='none';}
+function showSOSDetail(key){
+  var SOS=getSOSData();
+  var data=SOS[key];if(!data)return;
+  document.querySelectorAll('.sos-sc').forEach(function(s,i){s.classList[['evacuation','disaster','attack'][i]===key?'add':'remove']('active');});
+  var steps=data.s.map(function(s,i){return'<div class="sos-step"><div class="sos-step-n">'+(i+1)+'</div><div class="sos-step-b"><strong>'+s.h+'</strong><br>'+s.b+'</div></div>';}).join('');
+  var contacts=data.con.map(function(c){var btn=c.phone?'<button class="sos-call">Call</button>':'<a href="https://'+c.num+'" target="_blank" class="sos-call" style="text-decoration:none">Open</a>';return'<div class="sos-contact"><div><div class="sos-contact-name">'+c.n+'</div><div class="sos-contact-num">'+c.num+'</div></div>'+btn+'</div>';}).join('');
+  safeHtml('sosDetailContent','<div style="font-size:14px;font-weight:700;color:var(--white);margin-bottom:4px">'+data.t+'</div><div class="alert emer" style="margin-bottom:10px;font-size:11px">🚨 '+data.alert+'</div>'+steps+'<div style="margin-top:12px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--saffron);margin-bottom:7px">Emergency Contacts</div>'+contacts);
+  $('sosGrid').style.display='none';
+  $('sosDetail').style.display='block';
+}
+
+// ── PROFILE ───────────────────────────────────────────────────
+function openProfile(){
+  var nat=C[NAT],res=C[RES];if(!nat||!res)return;
+  var ctx=getCtx(NAT,RES);
+  var con=(RES==='DE'&&STATE&&['IN','PK','BD','NG','EG'].indexOf(NAT)!==-1)?getConsulate(STATE):null;
+  var h='<div class="profile-hero"><div style="font-size:38px">'+nat.flag+'</div><div style="font-size:22px;color:var(--ash-muted)">→</div><div style="font-size:38px">'+res.flag+'</div><div><div style="font-size:15px;font-weight:700;color:var(--white)">'+nat.dem+' National</div><div style="font-size:12px;color:var(--ash-muted)">Living in '+res.name+'</div>'+(STATE?'<div style="font-size:10px;color:var(--saffron);margin-top:2px">🏛️ '+STATE+', Germany</div>':'')+'</div></div>';
+  if(con){h+='<div class="section-label">Your Consulate</div>'+buildConsulateCard(con);}
+  else if(ctx){h+='<div class="section-label">Your Consular Office</div><div class="info-grid"><div class="info-cell"><div class="ic-label">Embassy</div><div class="ic-val">'+ctx.office+'</div></div><div class="info-cell"><div class="ic-label">Renewal</div><div class="ic-val">'+ctx.renewal+'</div></div></div>';}
+  if(ctx&&ctx.links&&ctx.links.length){
+    h+='<div class="section-label" style="margin-top:14px">Quick Links</div>';
+    ctx.links.forEach(function(l){h+='<a href="'+l.u+'" target="_blank" class="ql-btn"><span class="ql-icon">'+l.i+'</span><div class="ql-text"><div class="ql-label">'+l.l+'</div><div class="ql-note">'+l.n+'</div></div><span class="ql-arrow">↗</span></a>';});
+  }
+  safeHtml('profileBody',h);
+  $('profileModal').classList.remove('hidden');
+}
+function closeProfile(){$('profileModal').classList.add('hidden');}
+
+// ── DOM READY ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',function(){
+  // Global link delegator - ensures all dynamically injected links open in new tab
+  document.addEventListener('click',function(ev){
+    var el=ev.target;
+    while(el&&el.tagName!=='A') el=el.parentElement;
+    if(el&&el.tagName==='A'&&el.href&&(el.href.startsWith('http')||el.href.startsWith('https'))){
+      // Don't preventDefault — let target=_blank work natively
+      // Only force open if target not set
+      if(!el.target||el.target!=='_blank'){
+        ev.preventDefault();
+        window.open(el.href,'_blank','noopener,noreferrer');
+      }
+      // target=_blank links open naturally via browser
+    }
+  });
+
+  // Close modals on backdrop click
+  ['emerModal','sosModal','trackerModal','profileModal'].forEach(function(id){
+    var m=$(id);if(m)m.addEventListener('click',function(e){if(e.target.id===id)$(id).classList.add('hidden');});
+  });
+  renderTrackerSidebar();
+});
+
+
+</script>
+
+</body>
+</html>
